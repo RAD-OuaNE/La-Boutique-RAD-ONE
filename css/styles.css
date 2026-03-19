@@ -50,6 +50,19 @@ img {
   grid-template-columns: 1.5fr 0.7fr;
 }
 
+.hero--full,
+.hero--stats {
+  grid-template-columns: 1fr;
+}
+
+.hero--stats {
+  margin-top: -4px;
+}
+
+.hero--admin-head {
+  grid-template-columns: 1fr;
+}
+
 .hero__copy,
 .hero__card,
 .card {
@@ -114,6 +127,15 @@ img {
   align-content: start;
   background:
     linear-gradient(145deg, rgba(255, 252, 248, 0.96), rgba(249, 241, 233, 0.88));
+}
+
+.hero__card--stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hero__card--actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .stat {
@@ -641,6 +663,9 @@ img {
 @media (max-width: 920px) {
   .hero,
   .hero--small,
+  .hero--admin-head,
+  .hero--full,
+  .hero--stats,
   .layout {
     grid-template-columns: 1fr;
   }
@@ -654,6 +679,10 @@ img {
   .hero__card,
   .card {
     padding: 18px;
+  }
+
+  .hero__card--stats {
+    grid-template-columns: 1fr;
   }
 
   .toolbar,

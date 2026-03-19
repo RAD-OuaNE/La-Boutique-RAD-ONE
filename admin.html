@@ -8,22 +8,25 @@
 </head>
 <body>
   <div class="page-shell page-shell--admin">
-    <header class="hero hero--small">
+    <header class="hero hero--admin-head">
       <div class="hero__copy">
         <span class="hero__eyebrow">Admin demo</span>
-        <h1>Gestion produits et demandes</h1>
+        <h1>Gestion des produits, demandes et sondages</h1>
         <p>
           Cette page est une base de travail. En production, elle doit etre protegee par une vraie
           authentification.
         </p>
       </div>
-      <div class="hero__card">
-        <a class="button button--secondary" href="./index.html">Retour boutique</a>
-      </div>
     </header>
 
+    <section class="hero hero--stats">
+      <div class="hero__card hero__card--actions">
+        <a class="button button--secondary" href="./index.html">Retour boutique</a>
+      </div>
+    </section>
+
     <main class="admin-layout">
-      <section id="bulkSection" class="card">
+      <section id="authSection" class="card">
         <div class="section-head">
           <h2>Connexion admin</h2>
         </div>
@@ -44,6 +47,7 @@
             </button>
           </div>
         </form>
+        <div id="adminSessionBox" class="empty-state" hidden></div>
       </section>
 
       <section id="bulkSection" class="card">

@@ -46,8 +46,10 @@ const adminPassword = document.querySelector("#adminPassword");
 const adminLoginButton = document.querySelector("#adminLoginButton");
 const adminLogoutButton = document.querySelector("#adminLogoutButton");
 const adminAuthStatus = document.querySelector("#adminAuthStatus");
+const adminSessionBox = document.querySelector("#adminSessionBox");
 const adminProtectedArea = document.querySelector("#adminProtectedArea");
 const adminLockedState = document.querySelector("#adminLockedState");
+const authSection = document.querySelector("#authSection");
 const bulkSection = document.querySelector("#bulkSection");
 const singleProductSection = document.querySelector("#singleProductSection");
 const productsSection = document.querySelector("#productsSection");
@@ -224,6 +226,7 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   adminUnlocked = unlocked;
   adminProtectedArea.hidden = !unlocked;
   adminLockedState.hidden = unlocked;
+  authSection.hidden = false;
   bulkSection.hidden = false;
   singleProductSection.hidden = !unlocked;
   productsSection.hidden = !unlocked;
@@ -231,10 +234,14 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   ordersSection.hidden = !unlocked;
   adminLogoutButton.hidden = !unlocked || !usesRemoteData();
   adminLoginButton.hidden = unlocked && usesRemoteData();
+  adminLoginForm.hidden = unlocked && usesRemoteData();
+  adminSessionBox.hidden = !unlocked || !usesRemoteData();
   adminEmail.disabled = unlocked && usesRemoteData();
   adminPassword.disabled = unlocked && usesRemoteData();
 
   if (!usesRemoteData()) {
+    adminLoginForm.hidden = false;
+    adminSessionBox.hidden = true;
     showAuthMessage(
       "Mode demo local actif. Ajoute la config Supabase dans js/app-config.js pour proteger cette page et synchroniser les donnees.",
       "success",
@@ -243,8 +250,11 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   }
 
   if (unlocked) {
+    adminSessionBox.textContent = `Connecte en tant que ${userEmail}.`;
     showAuthMessage(`Connecte en tant que ${userEmail}.`, "success");
   } else {
+    adminLoginForm.hidden = false;
+    adminSessionBox.hidden = true;
     showAuthMessage("Connecte-toi avec un compte admin Supabase pour acceder a la gestion.", "error");
   }
 }
