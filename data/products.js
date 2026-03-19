@@ -36,15 +36,15 @@ export const defaultProducts = [
       "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    "id": "prod-onix-soin-botox-rouge-1kg",
-    "title": "Onix Soin Botox Rouge 1KG",
-    "category": "soins_lissage",
-    "description": "Soin professionnel qui répare, nourrit et lisse la fibre capillaire. Cheveux brillants, doux, sans frisottis et un résultat immédiat dès la première application.",
-    "price": 0,
-    "quantity": 1,
-    "showPrice": false,
-    "active": true,
-    "image": "https://nbakekcxtyvfnejvgfli.supabase.co/storage/v1/object/public/product-images/products/prod-wi2o2r2.jpg"
+    id: "prod-4",
+    title: "Onix Soin Botox Rouge 1KG",
+    category: "soins_lissage",
+    description: "Soin professionnel qui repare, nourrit et lisse la fibre capillaire. Cheveux brillants, doux, sans frisottis et un resultat immédiat dès la première application.",
+    price: 0,
+    quantity: 1,
+    showPrice: false,
+    active: true,
+    image: 
+      "https://nbakekcxtyvfnejvgfli.supabase.co/storage/v1/object/public/product-images/products/prod-wi2o2r2.jpg"
   }
-]
 ];
