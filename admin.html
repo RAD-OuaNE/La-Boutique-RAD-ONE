@@ -25,6 +25,14 @@
       </div>
     </section>
 
+    <section class="card">
+      <div id="adminNav" class="view-switch" aria-label="Navigation admin">
+        <button class="chip" type="button" data-admin-tab="products">Produits</button>
+        <button class="chip" type="button" data-admin-tab="surveys">Sondages</button>
+        <button class="chip" type="button" data-admin-tab="orders">Demandes clients</button>
+      </div>
+    </section>
+
     <main class="admin-layout">
       <section id="authSection" class="card">
         <div class="section-head">
@@ -50,7 +58,7 @@
         <div id="adminSessionBox" class="empty-state" hidden></div>
       </section>
 
-      <section id="bulkSection" class="card">
+      <section id="bulkSection" class="card" data-admin-panel="products">
         <div class="section-head">
           <h2>Import en lot</h2>
         </div>
@@ -106,7 +114,7 @@
         </div>
       </section>
 
-      <section id="singleProductSection" class="card">
+      <section id="singleProductSection" class="card" data-admin-panel="products">
         <div class="section-head">
           <h2 id="productFormTitle">Ajouter un produit seul</h2>
         </div>
@@ -196,14 +204,14 @@
         <p id="adminMessage" class="message" hidden></p>
       </section>
 
-      <section id="productsSection" class="card">
+      <section id="productsSection" class="card" data-admin-panel="products">
         <div class="section-head">
           <h2>Produits</h2>
         </div>
         <div id="adminProducts" class="admin-list"></div>
       </section>
 
-      <section id="surveysSection" class="card">
+      <section id="surveysSection" class="card" data-admin-panel="surveys">
         <div class="section-head">
           <h2>Sondages produits</h2>
         </div>
@@ -226,7 +234,7 @@
         <div id="adminSurveys" class="admin-list"></div>
       </section>
 
-      <section id="ordersSection" class="card">
+      <section id="ordersSection" class="card" data-admin-panel="orders">
         <div class="section-head">
           <h2>Demandes clients</h2>
         </div>

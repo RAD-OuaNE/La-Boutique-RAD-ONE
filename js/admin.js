@@ -26,6 +26,7 @@ const TARGET_IMAGE_WIDTH = 1200;
 const TARGET_IMAGE_HEIGHT = 900;
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 240;
+const ADMIN_TAB_KEY = "radone-admin-tab";
 
 const productForm = document.querySelector("#productForm");
 const productFormTitle = document.querySelector("#productFormTitle");
@@ -34,6 +35,7 @@ const productCancelEdit = document.querySelector("#productCancelEdit");
 const adminProducts = document.querySelector("#adminProducts");
 const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
+const adminNav = document.querySelector("#adminNav");
 const surveyForm = document.querySelector("#surveyForm");
 const surveyTitle = document.querySelector("#surveyTitle");
 const surveyDescription = document.querySelector("#surveyDescription");
@@ -55,6 +57,7 @@ const singleProductSection = document.querySelector("#singleProductSection");
 const productsSection = document.querySelector("#productsSection");
 const surveysSection = document.querySelector("#surveysSection");
 const ordersSection = document.querySelector("#ordersSection");
+const adminPanels = document.querySelectorAll("[data-admin-panel]");
 
 const imageFileInput = document.querySelector("#productImageFile");
 const imageUrlInput = document.querySelector("#productImage");
@@ -84,6 +87,9 @@ let singlePreviewObjectUrl = "";
 let adminUnlocked = false;
 let editingProductId = null;
 let imageLoadToken = 0;
+let activeAdminTab = ["products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
+  ? localStorage.getItem(ADMIN_TAB_KEY)
+  : "products";
 let singleImageState = {
   naturalWidth: PREVIEW_WIDTH,
   naturalHeight: PREVIEW_HEIGHT,
@@ -114,6 +120,18 @@ function showAuthMessage(text, type) {
   adminAuthStatus.hidden = false;
   adminAuthStatus.textContent = text;
   adminAuthStatus.className = `message message--${type}`;
+}
+
+function renderAdminTabs() {
+  adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
+    button.classList.toggle("chip--active", button.dataset.adminTab === activeAdminTab);
+  });
+}
+
+function updateAdminPanelsVisibility() {
+  adminPanels.forEach((panel) => {
+    panel.hidden = !adminUnlocked || panel.dataset.adminPanel !== activeAdminTab;
+  });
 }
 
 function revokeSinglePreviewUrl() {
@@ -227,17 +245,14 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   adminProtectedArea.hidden = !unlocked;
   adminLockedState.hidden = unlocked;
   authSection.hidden = false;
-  bulkSection.hidden = false;
-  singleProductSection.hidden = !unlocked;
-  productsSection.hidden = !unlocked;
-  surveysSection.hidden = !unlocked;
-  ordersSection.hidden = !unlocked;
   adminLogoutButton.hidden = !unlocked || !usesRemoteData();
   adminLoginButton.hidden = unlocked && usesRemoteData();
   adminLoginForm.hidden = unlocked && usesRemoteData();
   adminSessionBox.hidden = !unlocked || !usesRemoteData();
   adminEmail.disabled = unlocked && usesRemoteData();
   adminPassword.disabled = unlocked && usesRemoteData();
+  updateAdminPanelsVisibility();
+  renderAdminTabs();
 
   if (!usesRemoteData()) {
     adminLoginForm.hidden = false;
@@ -967,6 +982,15 @@ surveyForm.addEventListener("submit", async (event) => {
   }
 });
 
+adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeAdminTab = button.dataset.adminTab;
+    localStorage.setItem(ADMIN_TAB_KEY, activeAdminTab);
+    renderAdminTabs();
+    updateAdminPanelsVisibility();
+  });
+});
+
 singleOffsetXInput.addEventListener("input", () => {
   singleImageState.offsetX = Number(singleOffsetXInput.value);
   applySinglePreviewTransform();
@@ -1210,6 +1234,8 @@ adminLogoutButton.addEventListener("click", async () => {
 async function init() {
   renderBulkDrafts();
   resetProductForm();
+  renderAdminTabs();
+  updateAdminPanelsVisibility();
 
   if (!usesRemoteData()) {
     await unlockAdmin("mode-local@demo");
