@@ -1,4 +1,5 @@
 import {
+  deleteProduct,
   formatCurrency,
   getAdminSession,
   listOrders,
@@ -24,6 +25,9 @@ const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 240;
 
 const productForm = document.querySelector("#productForm");
+const productFormTitle = document.querySelector("#productFormTitle");
+const productSubmitButton = document.querySelector("#productSubmitButton");
+const productCancelEdit = document.querySelector("#productCancelEdit");
 const adminProducts = document.querySelector("#adminProducts");
 const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
@@ -65,6 +69,7 @@ let pendingSingleFile = null;
 let bulkDrafts = [];
 let singlePreviewObjectUrl = "";
 let adminUnlocked = false;
+let editingProductId = null;
 let singleImageState = {
   naturalWidth: PREVIEW_WIDTH,
   naturalHeight: PREVIEW_HEIGHT,
@@ -95,6 +100,51 @@ function showAuthMessage(text, type) {
   adminAuthStatus.hidden = false;
   adminAuthStatus.textContent = text;
   adminAuthStatus.className = `message message--${type}`;
+}
+
+function resetProductForm() {
+  productForm.reset();
+  document.querySelector("#productShowPrice").checked = true;
+  productFormTitle.textContent = "Ajouter un produit seul";
+  productSubmitButton.textContent = "Ajouter le produit";
+  productCancelEdit.hidden = true;
+  editingProductId = null;
+  pendingSingleFile = null;
+
+  if (singlePreviewObjectUrl) {
+    URL.revokeObjectURL(singlePreviewObjectUrl);
+    singlePreviewObjectUrl = "";
+  }
+
+  resetSingleImageState();
+  updateImagePreview("");
+  imageUrlInput.value = "";
+  imageFileInput.value = "";
+}
+
+function startEditingProduct(product) {
+  editingProductId = product.id;
+  productFormTitle.textContent = "Modifier le produit";
+  productSubmitButton.textContent = "Enregistrer les modifications";
+  productCancelEdit.hidden = false;
+
+  document.querySelector("#productTitle").value = product.title || "";
+  document.querySelector("#productCategory").value = product.category || "parfums";
+  document.querySelector("#productPrice").value = product.price ?? "";
+  document.querySelector("#productDescription").value = product.description || "";
+  document.querySelector("#productShowPrice").checked = Boolean(product.showPrice);
+  imageUrlInput.value = product.image || "";
+  imageFileInput.value = "";
+  pendingSingleFile = null;
+
+  if (singlePreviewObjectUrl) {
+    URL.revokeObjectURL(singlePreviewObjectUrl);
+    singlePreviewObjectUrl = "";
+  }
+
+  resetSingleImageState();
+  updateImagePreview(product.image || "");
+  singleImageTools.hidden = true;
 }
 
 function setAdminUnlocked(unlocked, userEmail = "") {
@@ -354,6 +404,20 @@ async function renderProducts() {
             >
               ${product.active ? "Masquer" : "Publier"}
             </button>
+            <button
+              type="button"
+              class="button button--secondary"
+              data-edit="${escapeHtml(product.id)}"
+            >
+              Modifier
+            </button>
+            <button
+              type="button"
+              class="button button--secondary"
+              data-delete="${escapeHtml(product.id)}"
+            >
+              Supprimer
+            </button>
           </article>
         `,
       )
@@ -366,6 +430,43 @@ async function renderProducts() {
           await renderProducts();
         } catch (error) {
           showMessage(error.message || "Mise a jour du produit impossible.", "error");
+        }
+      });
+    });
+
+    adminProducts.querySelectorAll("[data-edit]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const product = products.find((item) => item.id === button.dataset.edit);
+        if (!product) {
+          return;
+        }
+
+        startEditingProduct(product);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    adminProducts.querySelectorAll("[data-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const product = products.find((item) => item.id === button.dataset.delete);
+        if (!product) {
+          return;
+        }
+
+        const confirmed = window.confirm(`Supprimer "${product.title}" ?`);
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          await deleteProduct(product.id);
+          if (editingProductId === product.id) {
+            resetProductForm();
+          }
+          await renderProducts();
+          showMessage("Produit supprime.", "success");
+        } catch (error) {
+          showMessage(error.message || "Suppression impossible.", "error");
         }
       });
     });
@@ -658,6 +759,10 @@ imageUrlInput.addEventListener("input", (event) => {
   updateImagePreview(event.target.value.trim());
 });
 
+productCancelEdit.addEventListener("click", () => {
+  resetProductForm();
+});
+
 singleOffsetXInput.addEventListener("input", () => {
   singleImageState.offsetX = Number(singleOffsetXInput.value);
   applySinglePreviewTransform();
@@ -824,6 +929,7 @@ productForm.addEventListener("submit", async (event) => {
   }
 
   try {
+    const isEditing = Boolean(editingProductId);
     let image = imageUrlInput.value.trim();
     if (pendingSingleFile) {
       image = await processImageFile(pendingSingleFile, singleImageState);
@@ -835,7 +941,7 @@ productForm.addEventListener("submit", async (event) => {
     }
 
     const newProduct = {
-      id: `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: editingProductId || `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       title: document.querySelector("#productTitle").value.trim(),
       category: document.querySelector("#productCategory").value,
       price: Number(document.querySelector("#productPrice").value || 0),
@@ -846,16 +952,11 @@ productForm.addEventListener("submit", async (event) => {
     };
 
     await saveProduct(newProduct);
-    productForm.reset();
-    document.querySelector("#productShowPrice").checked = true;
-    pendingSingleFile = null;
-    if (singlePreviewObjectUrl) {
-      URL.revokeObjectURL(singlePreviewObjectUrl);
-      singlePreviewObjectUrl = "";
-    }
-    resetSingleImageState();
-    updateImagePreview("");
-    showMessage("Produit ajoute dans la vitrine.", "success");
+    resetProductForm();
+    showMessage(
+      isEditing ? "Produit modifie dans la vitrine." : "Produit ajoute dans la vitrine.",
+      "success",
+    );
     await renderProducts();
   } catch (error) {
     showMessage(error.message || "Impossible de preparer cette image.", "error");
@@ -900,6 +1001,7 @@ adminLogoutButton.addEventListener("click", async () => {
 
 async function init() {
   renderBulkDrafts();
+  resetProductForm();
 
   if (!usesRemoteData()) {
     await unlockAdmin("mode-local@demo");

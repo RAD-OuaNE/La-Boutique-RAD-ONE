@@ -46,7 +46,7 @@
         </form>
       </section>
 
-      <section id="singleProductSection" class="card">
+      <section id="bulkSection" class="card">
         <div class="section-head">
           <h2>Import en lot</h2>
         </div>
@@ -97,9 +97,9 @@
         </div>
       </section>
 
-      <section id="productsSection" class="card">
+      <section id="singleProductSection" class="card">
         <div class="section-head">
-          <h2>Ajouter un produit seul</h2>
+          <h2 id="productFormTitle">Ajouter un produit seul</h2>
         </div>
         <form id="productForm" class="form">
           <label>
@@ -173,19 +173,24 @@
             <input id="productShowPrice" type="checkbox" checked />
             <span>Afficher le prix</span>
           </label>
-          <button class="button" type="submit">Ajouter le produit</button>
+          <div class="bulk-actions">
+            <button id="productSubmitButton" class="button" type="submit">Ajouter le produit</button>
+            <button id="productCancelEdit" class="button button--secondary" type="button" hidden>
+              Annuler la modification
+            </button>
+          </div>
         </form>
         <p id="adminMessage" class="message" hidden></p>
       </section>
 
-      <section id="ordersSection" class="card">
+      <section id="productsSection" class="card">
         <div class="section-head">
           <h2>Produits</h2>
         </div>
         <div id="adminProducts" class="admin-list"></div>
       </section>
 
-      <section class="card">
+      <section id="ordersSection" class="card">
         <div class="section-head">
           <h2>Demandes clients</h2>
         </div>

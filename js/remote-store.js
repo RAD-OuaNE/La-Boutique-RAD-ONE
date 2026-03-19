@@ -244,6 +244,21 @@ export async function toggleProductActive(productId) {
   }
 }
 
+export async function deleteProduct(productId) {
+  const client = getSupabase();
+  if (!client) {
+    const products = getLocalProducts().filter((product) => product.id !== productId);
+    saveLocalProducts(products);
+    return;
+  }
+
+  const config = getAppConfig();
+  const { error } = await client.from(config.productsTable).delete().eq("id", productId);
+  if (error) {
+    throw new Error(error.message || "Suppression produit impossible.");
+  }
+}
+
 export async function listOrders() {
   const client = getSupabase();
   if (!client) {
