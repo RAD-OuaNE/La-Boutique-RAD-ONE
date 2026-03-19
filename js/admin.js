@@ -21,6 +21,11 @@ const CATEGORY_LABELS = {
   maquillage: "Maquillage",
   jouets: "Jouets",
   coffrets: "Coffrets",
+  soins_lissage: "Soins lissage",
+  soins_botox: "Soins botox",
+  kits_soins: "Kits soins",
+  accessoires: "Accessoires",
+  autres: "Autres",
 };
 
 const TARGET_IMAGE_WIDTH = 1200;
@@ -135,6 +140,20 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function getCategoryLabel(categoryId) {
+  if (!categoryId) {
+    return "Autres";
+  }
+
+  if (CATEGORY_LABELS[categoryId]) {
+    return CATEGORY_LABELS[categoryId];
+  }
+
+  return String(categoryId)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function showMessage(text, type) {
@@ -313,7 +332,9 @@ function startEditingProduct(product) {
   productCancelEdit.hidden = false;
 
   document.querySelector("#productTitle").value = product.title || "";
-  document.querySelector("#productCategory").value = product.category || "parfums";
+  document.querySelector("#productCategory").value = CATEGORY_LABELS[product.category]
+    ? product.category
+    : "autres";
   document.querySelector("#productPrice").value = product.price ?? "";
   document.querySelector("#productQuantity").value = product.quantity ?? 0;
   document.querySelector("#productDescription").value = product.description || "";
@@ -578,7 +599,7 @@ async function renderProducts() {
             <img class="admin-item__thumb" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
             <div class="admin-item__body">
               <strong>${escapeHtml(product.title)}</strong>
-              <span>${escapeHtml(CATEGORY_LABELS[product.category] || product.category)}</span>
+              <span>${escapeHtml(getCategoryLabel(product.category))}</span>
               <span>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix masque"}</span>
               <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
             </div>

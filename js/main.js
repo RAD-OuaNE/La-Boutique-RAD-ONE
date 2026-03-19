@@ -16,7 +16,26 @@ const CATEGORY_LABELS = {
   maquillage: "Maquillage",
   jouets: "Jouets",
   coffrets: "Coffrets",
+  soins_lissage: "Soins lissage",
+  soins_botox: "Soins botox",
+  kits_soins: "Kits soins",
+  accessoires: "Accessoires",
+  autres: "Autres",
 };
+
+function getCategoryLabel(categoryId) {
+  if (!categoryId) {
+    return "Autres";
+  }
+
+  if (CATEGORY_LABELS[categoryId]) {
+    return CATEGORY_LABELS[categoryId];
+  }
+
+  return String(categoryId)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 const SURVEY_VOTES_KEY = "vitrine-survey-votes";
 const VIEW_MODE_KEY = "vitrine-view-mode";
@@ -120,7 +139,7 @@ function renderFilters() {
           type="button"
           data-category="${escapeHtml(categoryId)}"
         >
-          ${escapeHtml(CATEGORY_LABELS[categoryId] || categoryId)}
+          ${escapeHtml(getCategoryLabel(categoryId))}
         </button>
       `,
     )
@@ -159,7 +178,7 @@ function renderCatalogue() {
               <img class="product-card__image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
             </div>
             <div class="product-card__body">
-              <span class="badge badge--soft">${escapeHtml(CATEGORY_LABELS[product.category] || product.category)}</span>
+              <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
               <h3>${escapeHtml(product.title)}</h3>
               <p>${escapeHtml(product.description)}</p>
               <div class="survey-card__stats">
