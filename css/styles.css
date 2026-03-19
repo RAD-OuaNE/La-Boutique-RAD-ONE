@@ -421,6 +421,38 @@ img {
   line-height: 1.65;
 }
 
+.product-card__description-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.product-card__description {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 5.8em;
+  line-height: 1.65;
+}
+
+.product-card__description--expanded {
+  display: block;
+  overflow: visible;
+  min-height: 0;
+}
+
+.product-card__details {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
 .product-card__footer,
 .section-head,
 .basket__total,
@@ -838,8 +870,9 @@ img {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .product-grid {
-    grid-template-columns: 1fr;
+  .product-grid:not(.product-grid--list) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 
   .toolbar__row,
@@ -854,6 +887,30 @@ img {
   .product-card--list {
     grid-template-columns: 1fr;
     min-height: 0;
+  }
+
+  .product-card__image-wrap {
+    padding: 14px;
+  }
+
+  .product-card__image {
+    transform: scale(0.84);
+  }
+
+  .product-card__body {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .product-card__body h3 {
+    font-size: 1.02rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .product-card__description {
+    -webkit-line-clamp: 3;
+    min-height: 4.8em;
+    font-size: 0.95rem;
   }
 
   .product-card__footer,
@@ -906,6 +963,51 @@ img {
   .view-switch .chip {
     width: fit-content;
     max-width: 100%;
+  }
+
+  .product-grid:not(.product-grid--list) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .product-card__image-wrap {
+    aspect-ratio: 1 / 1;
+    padding: 10px;
+  }
+
+  .product-card__image {
+    transform: scale(0.8);
+  }
+
+  .product-card__body {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .product-card__body h3 {
+    font-size: 0.95rem;
+  }
+
+  .product-card__description {
+    -webkit-line-clamp: 2;
+    min-height: 3.4em;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .product-card__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-card__footer .button {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .survey-card__stats {
+    font-size: 0.88rem;
   }
 
   .image-preview {

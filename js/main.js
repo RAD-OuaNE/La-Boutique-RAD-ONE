@@ -52,6 +52,7 @@ const state = {
   category: "all",
   surveys: [],
   viewMode: getInitialViewMode(),
+  expandedDescriptions: {},
 };
 
 const productGrid = document.querySelector("#productGrid");
@@ -171,6 +172,8 @@ function renderCatalogue() {
       .map(
         (product) => {
           const inCartQuantity = Number(state.cart[product.id] || 0);
+          const hasLongDescription = String(product.description || "").trim().length > 120;
+          const isExpanded = Boolean(state.expandedDescriptions[product.id]);
 
           return `
           <article class="product-card product-card--${state.viewMode} card">
@@ -180,7 +183,22 @@ function renderCatalogue() {
             <div class="product-card__body">
               <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
               <h3>${escapeHtml(product.title)}</h3>
-              <p>${escapeHtml(product.description)}</p>
+              <div class="product-card__description-wrap">
+                <p class="product-card__description ${isExpanded ? "product-card__description--expanded" : ""}">
+                  ${escapeHtml(product.description)}
+                </p>
+                ${
+                  hasLongDescription
+                    ? `<button
+                        class="product-card__details"
+                        type="button"
+                        data-toggle-details="${escapeHtml(product.id)}"
+                      >
+                        ${isExpanded ? "Moins de details" : "Plus de details..."}
+                      </button>`
+                    : ""
+                }
+              </div>
               <div class="survey-card__stats">
                 <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
                 ${
@@ -229,6 +247,14 @@ function renderCatalogue() {
       saveCart(state.cart);
       renderCatalogue();
       renderCart();
+    });
+  });
+
+  productGrid.querySelectorAll("[data-toggle-details]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const productId = button.dataset.toggleDetails;
+      state.expandedDescriptions[productId] = !state.expandedDescriptions[productId];
+      renderCatalogue();
     });
   });
 
