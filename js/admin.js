@@ -81,6 +81,7 @@ let bulkDrafts = [];
 let singlePreviewObjectUrl = "";
 let adminUnlocked = false;
 let editingProductId = null;
+let imageLoadToken = 0;
 let singleImageState = {
   naturalWidth: PREVIEW_WIDTH,
   naturalHeight: PREVIEW_HEIGHT,
@@ -113,6 +114,74 @@ function showAuthMessage(text, type) {
   adminAuthStatus.className = `message message--${type}`;
 }
 
+function revokeSinglePreviewUrl() {
+  if (singlePreviewObjectUrl) {
+    URL.revokeObjectURL(singlePreviewObjectUrl);
+    singlePreviewObjectUrl = "";
+  }
+}
+
+async function fetchUrlAsFile(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Impossible de recuperer cette image distante.");
+  }
+
+  const blob = await response.blob();
+  const extension = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+  return new File([blob], `remote-image.${extension}`, { type: blob.type || "image/jpeg" });
+}
+
+async function setSingleImageFromUrl(url, { silent = false } = {}) {
+  const trimmedUrl = url.trim();
+  const token = ++imageLoadToken;
+
+  if (!trimmedUrl) {
+    pendingSingleFile = null;
+    revokeSinglePreviewUrl();
+    resetSingleImageState();
+    updateImagePreview("");
+    return;
+  }
+
+  pendingSingleFile = null;
+  revokeSinglePreviewUrl();
+  resetSingleImageState();
+  updateImagePreview(trimmedUrl);
+  singleImageTools.hidden = true;
+
+  try {
+    const fetchedFile = await fetchUrlAsFile(trimmedUrl);
+    if (token !== imageLoadToken) {
+      return;
+    }
+
+    pendingSingleFile = fetchedFile;
+    singlePreviewObjectUrl = URL.createObjectURL(fetchedFile);
+    updateImagePreview(singlePreviewObjectUrl);
+    singleImageTools.hidden = false;
+
+    const image = await loadImageFromObjectUrl(singlePreviewObjectUrl);
+    if (token !== imageLoadToken) {
+      return;
+    }
+
+    singleImageState.naturalWidth = image.naturalWidth;
+    singleImageState.naturalHeight = image.naturalHeight;
+    applySinglePreviewTransform();
+  } catch {
+    pendingSingleFile = null;
+    singleImageTools.hidden = true;
+    updateImagePreview(trimmedUrl);
+    if (!silent) {
+      showMessage(
+        "Recadrage avance indisponible pour cette URL. Utilise plutot un fichier local ou une image accessible en telechargement direct.",
+        "error",
+      );
+    }
+  }
+}
+
 function resetProductForm() {
   productForm.reset();
   document.querySelector("#productShowPrice").checked = true;
@@ -122,10 +191,7 @@ function resetProductForm() {
   editingProductId = null;
   pendingSingleFile = null;
 
-  if (singlePreviewObjectUrl) {
-    URL.revokeObjectURL(singlePreviewObjectUrl);
-    singlePreviewObjectUrl = "";
-  }
+  revokeSinglePreviewUrl();
 
   resetSingleImageState();
   updateImagePreview("");
@@ -149,14 +215,9 @@ function startEditingProduct(product) {
   imageFileInput.value = "";
   pendingSingleFile = null;
 
-  if (singlePreviewObjectUrl) {
-    URL.revokeObjectURL(singlePreviewObjectUrl);
-    singlePreviewObjectUrl = "";
-  }
-
+  revokeSinglePreviewUrl();
   resetSingleImageState();
-  updateImagePreview(product.image || "");
-  singleImageTools.hidden = true;
+  setSingleImageFromUrl(product.image || "", { silent: true });
 }
 
 function setAdminUnlocked(unlocked, userEmail = "") {
@@ -839,21 +900,17 @@ async function lockAdmin() {
 
 imageFileInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0] || null;
+  imageLoadToken += 1;
   pendingSingleFile = file;
 
   if (!file) {
-    if (singlePreviewObjectUrl) {
-      URL.revokeObjectURL(singlePreviewObjectUrl);
-      singlePreviewObjectUrl = "";
-    }
+    revokeSinglePreviewUrl();
     resetSingleImageState();
     updateImagePreview(imageUrlInput.value.trim());
     return;
   }
 
-  if (singlePreviewObjectUrl) {
-    URL.revokeObjectURL(singlePreviewObjectUrl);
-  }
+  revokeSinglePreviewUrl();
 
   imageUrlInput.value = "";
   singlePreviewObjectUrl = URL.createObjectURL(file);
@@ -867,18 +924,9 @@ imageFileInput.addEventListener("change", (event) => {
   });
 });
 
-imageUrlInput.addEventListener("input", (event) => {
-  if (event.target.value.trim()) {
-    pendingSingleFile = null;
-    imageFileInput.value = "";
-    if (singlePreviewObjectUrl) {
-      URL.revokeObjectURL(singlePreviewObjectUrl);
-      singlePreviewObjectUrl = "";
-    }
-  }
-
-  singleImageTools.hidden = true;
-  updateImagePreview(event.target.value.trim());
+imageUrlInput.addEventListener("change", async (event) => {
+  imageFileInput.value = "";
+  await setSingleImageFromUrl(event.target.value);
 });
 
 productCancelEdit.addEventListener("click", () => {

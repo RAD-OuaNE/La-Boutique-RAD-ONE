@@ -18,6 +18,8 @@ const CATEGORY_LABELS = {
   coffrets: "Coffrets",
 };
 
+const SURVEY_VOTES_KEY = "vitrine-survey-votes";
+
 const state = {
   products: [],
   cart: getCart(),
@@ -38,6 +40,18 @@ const orderForm = document.querySelector("#orderForm");
 const formMessage = document.querySelector("#formMessage");
 const dataModeHint = document.querySelector("#dataModeHint");
 const surveyList = document.querySelector("#surveyList");
+
+function getSurveyVotes() {
+  try {
+    return JSON.parse(localStorage.getItem(SURVEY_VOTES_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveSurveyVotes(votes) {
+  localStorage.setItem(SURVEY_VOTES_KEY, JSON.stringify(votes));
+}
 
 function escapeHtml(value) {
   return String(value || "")
@@ -252,28 +266,40 @@ function renderSurveys() {
     return;
   }
 
+  const surveyVotes = getSurveyVotes();
   surveyList.innerHTML = state.surveys
     .map(
-      (survey) => `
-        <article class="survey-card">
-          <strong>${escapeHtml(survey.title)}</strong>
-          <p>${escapeHtml(survey.description || "Dis-nous si ce produit t'interesserait.")}</p>
-          <div class="survey-card__stats">
-            <span>Interesses: ${survey.interestedCount}</span>
-            <span>Pas interesses: ${survey.notInterestedCount}</span>
-          </div>
-          <div class="survey-card__actions">
-            <button class="button" type="button" data-vote="${escapeHtml(survey.id)}" data-vote-type="interested">
-              Interesse
-            </button>
-            <button class="button button--secondary" type="button" data-vote="${escapeHtml(
-              survey.id,
-            )}" data-vote-type="not_interested">
-              Pas pour moi
-            </button>
-          </div>
-        </article>
-      `,
+      (survey) => {
+        const alreadyVoted = Boolean(surveyVotes[survey.id]);
+
+        return `
+          <article class="survey-card">
+            <strong>${escapeHtml(survey.title)}</strong>
+            <p>${escapeHtml(survey.description || "Dis-nous si ce produit t'interesserait.")}</p>
+            <div class="survey-card__stats">
+              <span>Interesses: ${survey.interestedCount}</span>
+              <span>Pas interesses: ${survey.notInterestedCount}</span>
+            </div>
+            ${
+              alreadyVoted
+                ? `<div class="message message--success">Vote deja enregistre sur cet appareil.</div>`
+                : ""
+            }
+            <div class="survey-card__actions">
+              <button class="button" type="button" data-vote="${escapeHtml(survey.id)}" data-vote-type="interested" ${
+                alreadyVoted ? "disabled" : ""
+              }>
+                Interesse
+              </button>
+              <button class="button button--secondary" type="button" data-vote="${escapeHtml(
+                survey.id,
+              )}" data-vote-type="not_interested" ${alreadyVoted ? "disabled" : ""}>
+                Pas pour moi
+              </button>
+            </div>
+          </article>
+        `;
+      },
     )
     .join("");
 
@@ -285,6 +311,9 @@ function renderSurveys() {
 
       try {
         await voteSurvey(surveyId, voteType);
+        const surveyVotes = getSurveyVotes();
+        surveyVotes[surveyId] = voteType;
+        saveSurveyVotes(surveyVotes);
         state.surveys = await listSurveys({ activeOnly: true });
         renderSurveys();
       } catch (error) {

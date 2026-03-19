@@ -176,7 +176,7 @@ export async function listProducts({ includeInactive = false } = {}) {
   const config = getAppConfig();
   let query = client
     .from(config.productsTable)
-    .select("id,title,category,description,price,show_price,active,image,created_at")
+    .select("id,title,category,description,price,quantity,show_price,active,image,created_at")
     .order("created_at", { ascending: false });
 
   if (!includeInactive) {
@@ -195,7 +195,10 @@ export async function saveProduct(product) {
   const client = getSupabase();
   if (!client) {
     const products = getLocalProducts();
-    saveLocalProducts([product, ...products]);
+    const nextProducts = products.some((item) => item.id === product.id)
+      ? products.map((item) => (item.id === product.id ? product : item))
+      : [product, ...products];
+    saveLocalProducts(nextProducts);
     return product;
   }
 
