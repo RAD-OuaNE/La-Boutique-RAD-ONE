@@ -28,10 +28,14 @@ const CATEGORY_LABELS = {
   autres: "Autres",
 };
 
-const TARGET_IMAGE_WIDTH = 1200;
-const TARGET_IMAGE_HEIGHT = 900;
+const TARGET_IMAGE_WIDTH = 960;
+const TARGET_IMAGE_HEIGHT = 720;
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 240;
+const TARGET_IMAGE_MAX_BYTES = 260 * 1024;
+const TARGET_IMAGE_START_QUALITY = 0.8;
+const TARGET_IMAGE_MIN_QUALITY = 0.58;
+const TARGET_IMAGE_QUALITY_STEP = 0.06;
 const ADMIN_TAB_KEY = "radone-admin-tab";
 const PRODUCT_TAB_KEY = "radone-product-tab";
 const ORDER_FILTER_KEY = "radone-order-filter";
@@ -514,6 +518,24 @@ function applySinglePreviewTransform() {
   imagePreview.style.cssText = getPreviewImageStyle(singleImageState);
 }
 
+function estimateDataUrlBytes(dataUrl) {
+  const base64Payload = dataUrl.split(",")[1] || "";
+  const padding = (base64Payload.match(/=*$/)?.[0].length || 0);
+  return Math.floor((base64Payload.length * 3) / 4) - padding;
+}
+
+function exportCanvasAsOptimizedJpeg(canvas) {
+  let quality = TARGET_IMAGE_START_QUALITY;
+  let dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+  while (estimateDataUrlBytes(dataUrl) > TARGET_IMAGE_MAX_BYTES && quality > TARGET_IMAGE_MIN_QUALITY) {
+    quality = Math.max(TARGET_IMAGE_MIN_QUALITY, Number((quality - TARGET_IMAGE_QUALITY_STEP).toFixed(2)));
+    dataUrl = canvas.toDataURL("image/jpeg", quality);
+  }
+
+  return dataUrl;
+}
+
 async function processImageFile(
   file,
   {
@@ -565,7 +587,7 @@ async function processImageFile(
     );
     context.drawImage(image, -width / 2, -height / 2, width, height);
 
-    return canvas.toDataURL("image/jpeg", 0.88);
+    return exportCanvasAsOptimizedJpeg(canvas);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
