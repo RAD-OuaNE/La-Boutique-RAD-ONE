@@ -150,7 +150,10 @@ function renderCatalogue() {
   } else {
     productGrid.innerHTML = visibleProducts
       .map(
-        (product) => `
+        (product) => {
+          const inCartQuantity = Number(state.cart[product.id] || 0);
+
+          return `
           <article class="product-card product-card--${state.viewMode} card">
             <div class="product-card__image-wrap">
               <img class="product-card__image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
@@ -161,18 +164,30 @@ function renderCatalogue() {
               <p>${escapeHtml(product.description)}</p>
               <div class="survey-card__stats">
                 <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
+                ${
+                  inCartQuantity > 0
+                    ? `<span class="product-card__cart-note">${inCartQuantity} dans le panier</span>`
+                    : ""
+                }
               </div>
               <div class="product-card__footer">
                 <strong>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix sur demande"}</strong>
                 <button class="button" type="button" data-add="${escapeHtml(product.id)}" ${
                   product.quantity <= 0 ? "disabled" : ""
                 }>
-                  ${product.quantity > 0 ? "Ajouter" : "Epuise"}
+                  ${
+                    product.quantity > 0
+                      ? inCartQuantity > 0
+                        ? "Ajouter encore"
+                        : "Ajouter"
+                      : "Epuise"
+                  }
                 </button>
               </div>
             </div>
           </article>
-        `,
+        `;
+        },
       )
       .join("");
   }
@@ -193,6 +208,7 @@ function renderCatalogue() {
 
       state.cart[productId] = nextQuantity;
       saveCart(state.cart);
+      renderCatalogue();
       renderCart();
     });
   });
@@ -251,6 +267,7 @@ function renderCart() {
         delete state.cart[productId];
       }
       saveCart(state.cart);
+      renderCatalogue();
       renderCart();
     });
   });
@@ -271,6 +288,7 @@ function renderCart() {
 
       state.cart[productId] = nextQuantity;
       saveCart(state.cart);
+      renderCatalogue();
       renderCart();
     });
   });
