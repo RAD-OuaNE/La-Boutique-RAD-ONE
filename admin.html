@@ -50,14 +50,11 @@
           </label>
           <div class="bulk-actions">
             <button id="adminLoginButton" class="button" type="submit">Se connecter</button>
-            <button id="adminLogoutButton" class="button button--secondary" type="button" hidden>
-              Se deconnecter
-            </button>
           </div>
         </form>
         <div id="adminSessionBox" class="admin-session" hidden>
           <div>
-            <strong>Session active</strong>
+            <strong id="adminSessionTitle">Session active</strong>
             <div id="adminSessionText" class="admin-session__text"></div>
           </div>
           <button id="adminLogoutButtonInline" class="button button--secondary" type="button">
@@ -66,7 +63,15 @@
         </div>
       </section>
 
-      <section id="bulkSection" class="card" data-admin-panel="products">
+      <section id="productsSubnavSection" class="card" data-admin-panel="products">
+        <div id="productsSubnav" class="view-switch" aria-label="Navigation produits">
+          <button class="chip" type="button" data-product-tab="bulk">Import en lot</button>
+          <button class="chip" type="button" data-product-tab="single">Ajouter un produit</button>
+          <button class="chip" type="button" data-product-tab="list">Liste produits</button>
+        </div>
+      </section>
+
+      <section id="bulkSection" class="card" data-admin-panel="products" data-product-panel="bulk">
         <div class="section-head">
           <h2>Import en lot</h2>
         </div>
@@ -122,7 +127,7 @@
         </div>
       </section>
 
-      <section id="singleProductSection" class="card" data-admin-panel="products">
+      <section id="singleProductSection" class="card" data-admin-panel="products" data-product-panel="single">
         <div class="section-head">
           <h2 id="productFormTitle">Ajouter un produit seul</h2>
         </div>
@@ -161,35 +166,56 @@
               <img id="imagePreview" class="image-preview__img" alt="Apercu du produit" />
             </div>
           </div>
-          <div id="singleImageTools" class="bulk-card__fields" hidden>
-            <div class="bulk-card__crop">
-              <label>
-                <span>Deplacement horizontal</span>
-                <input id="singleOffsetX" type="range" min="-100" max="100" value="0" />
-              </label>
-              <label>
-                <span>Deplacement vertical</span>
-                <input id="singleOffsetY" type="range" min="-100" max="100" value="0" />
-              </label>
-              <label>
-                <span>Zoom</span>
-                <input id="singleZoom" type="range" min="1" max="3" step="0.05" value="1" />
-              </label>
+          <div id="singleImageTools" class="image-tools" hidden>
+            <p class="image-tools__hint">
+              Ajuste le cadrage avec les fleches, puis zoome si besoin.
+            </p>
+            <div class="image-tools__layout">
+              <div class="image-pad" aria-label="Deplacement de l'image">
+                <button id="singleMoveUp" class="mini-btn mini-btn--tool" type="button" aria-label="Monter">
+                  ↑
+                </button>
+                <div class="image-pad__middle">
+                  <button id="singleMoveLeft" class="mini-btn mini-btn--tool" type="button" aria-label="Gauche">
+                    ←
+                  </button>
+                  <button id="singleMoveRight" class="mini-btn mini-btn--tool" type="button" aria-label="Droite">
+                    →
+                  </button>
+                </div>
+                <button id="singleMoveDown" class="mini-btn mini-btn--tool" type="button" aria-label="Descendre">
+                  ↓
+                </button>
+              </div>
+              <div class="image-zoom-controls">
+                <span class="image-tools__label">Zoom</span>
+                <div class="image-zoom-controls__buttons">
+                  <button id="singleZoomOut" class="mini-btn mini-btn--tool" type="button" aria-label="Zoom moins">
+                    −
+                  </button>
+                  <output id="singleZoomValue" class="image-tools__value" for="singleZoomIn singleZoomOut">
+                    100%
+                  </output>
+                  <button id="singleZoomIn" class="mini-btn mini-btn--tool" type="button" aria-label="Zoom plus">
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="bulk-card__toolbar">
-              <button id="singleRotateLeft" class="button button--secondary" type="button">
+            <div class="image-tools__actions">
+              <button id="singleRotateLeft" class="button button--secondary button--compact" type="button">
                 Rotation gauche
               </button>
-              <button id="singleRotateRight" class="button button--secondary" type="button">
+              <button id="singleRotateRight" class="button button--secondary button--compact" type="button">
                 Rotation droite
               </button>
-              <button id="singleFlipX" class="button button--secondary" type="button">
+              <button id="singleFlipX" class="button button--secondary button--compact" type="button">
                 Miroir horizontal
               </button>
-              <button id="singleFlipY" class="button button--secondary" type="button">
+              <button id="singleFlipY" class="button button--secondary button--compact" type="button">
                 Miroir vertical
               </button>
-              <button id="singleResetCrop" class="button button--secondary" type="button">
+              <button id="singleResetCrop" class="button button--secondary button--compact" type="button">
                 Reinitialiser
               </button>
             </div>
@@ -212,7 +238,7 @@
         <p id="adminMessage" class="message" hidden></p>
       </section>
 
-      <section id="productsSection" class="card" data-admin-panel="products">
+      <section id="productsSection" class="card" data-admin-panel="products" data-product-panel="list">
         <div class="section-head">
           <h2>Produits</h2>
         </div>

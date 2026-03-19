@@ -28,6 +28,7 @@ const TARGET_IMAGE_HEIGHT = 900;
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 240;
 const ADMIN_TAB_KEY = "radone-admin-tab";
+const PRODUCT_TAB_KEY = "radone-product-tab";
 const ORDER_FILTER_KEY = "radone-order-filter";
 const ORDER_STATUSES = [
   "Nouvelle",
@@ -46,6 +47,7 @@ const adminProducts = document.querySelector("#adminProducts");
 const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
 const adminNav = document.querySelector("#adminNav");
+const productsSubnav = document.querySelector("#productsSubnav");
 const orderStatusFilters = document.querySelector("#orderStatusFilters");
 const surveyForm = document.querySelector("#surveyForm");
 const surveyTitle = document.querySelector("#surveyTitle");
@@ -57,29 +59,35 @@ const adminLoginForm = document.querySelector("#adminLoginForm");
 const adminEmail = document.querySelector("#adminEmail");
 const adminPassword = document.querySelector("#adminPassword");
 const adminLoginButton = document.querySelector("#adminLoginButton");
-const adminLogoutButton = document.querySelector("#adminLogoutButton");
 const adminAuthStatus = document.querySelector("#adminAuthStatus");
 const adminSessionBox = document.querySelector("#adminSessionBox");
+const adminSessionTitle = document.querySelector("#adminSessionTitle");
 const adminSessionText = document.querySelector("#adminSessionText");
 const adminLogoutButtonInline = document.querySelector("#adminLogoutButtonInline");
 const adminProtectedArea = document.querySelector("#adminProtectedArea");
 const adminLockedState = document.querySelector("#adminLockedState");
 const authSection = document.querySelector("#authSection");
+const productsSubnavSection = document.querySelector("#productsSubnavSection");
 const bulkSection = document.querySelector("#bulkSection");
 const singleProductSection = document.querySelector("#singleProductSection");
 const productsSection = document.querySelector("#productsSection");
 const surveysSection = document.querySelector("#surveysSection");
 const ordersSection = document.querySelector("#ordersSection");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
+const productPanels = document.querySelectorAll("[data-product-panel]");
 
 const imageFileInput = document.querySelector("#productImageFile");
 const imageUrlInput = document.querySelector("#productImage");
 const imagePreviewWrap = document.querySelector("#imagePreviewWrap");
 const imagePreview = document.querySelector("#imagePreview");
 const singleImageTools = document.querySelector("#singleImageTools");
-const singleOffsetXInput = document.querySelector("#singleOffsetX");
-const singleOffsetYInput = document.querySelector("#singleOffsetY");
-const singleZoomInput = document.querySelector("#singleZoom");
+const singleMoveUpButton = document.querySelector("#singleMoveUp");
+const singleMoveLeftButton = document.querySelector("#singleMoveLeft");
+const singleMoveRightButton = document.querySelector("#singleMoveRight");
+const singleMoveDownButton = document.querySelector("#singleMoveDown");
+const singleZoomOutButton = document.querySelector("#singleZoomOut");
+const singleZoomInButton = document.querySelector("#singleZoomIn");
+const singleZoomValue = document.querySelector("#singleZoomValue");
 const singleRotateLeftButton = document.querySelector("#singleRotateLeft");
 const singleRotateRightButton = document.querySelector("#singleRotateRight");
 const singleFlipXButton = document.querySelector("#singleFlipX");
@@ -103,6 +111,9 @@ let imageLoadToken = 0;
 let activeAdminTab = ["products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
   ? localStorage.getItem(ADMIN_TAB_KEY)
   : "products";
+let activeProductTab = ["bulk", "single", "list"].includes(localStorage.getItem(PRODUCT_TAB_KEY))
+  ? localStorage.getItem(PRODUCT_TAB_KEY)
+  : "bulk";
 let activeOrderFilter = ["all", ...ORDER_STATUSES].includes(localStorage.getItem(ORDER_FILTER_KEY))
   ? localStorage.getItem(ORDER_FILTER_KEY)
   : "all";
@@ -144,6 +155,12 @@ function renderAdminTabs() {
   });
 }
 
+function renderProductTabs() {
+  productsSubnav.querySelectorAll("[data-product-tab]").forEach((button) => {
+    button.classList.toggle("chip--active", button.dataset.productTab === activeProductTab);
+  });
+}
+
 function renderOrderFilters() {
   orderStatusFilters.querySelectorAll("[data-order-filter]").forEach((button) => {
     button.classList.toggle("chip--active", button.dataset.orderFilter === activeOrderFilter);
@@ -154,6 +171,19 @@ function updateAdminPanelsVisibility() {
   adminPanels.forEach((panel) => {
     panel.hidden = !adminUnlocked || panel.dataset.adminPanel !== activeAdminTab;
   });
+
+  if (!adminUnlocked || activeAdminTab !== "products") {
+    productPanels.forEach((panel) => {
+      panel.hidden = true;
+    });
+    productsSubnavSection.hidden = !adminUnlocked || activeAdminTab !== "products";
+    return;
+  }
+
+  productsSubnavSection.hidden = false;
+  productPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.productPanel !== activeProductTab;
+  });
 }
 
 function revokeSinglePreviewUrl() {
@@ -161,6 +191,39 @@ function revokeSinglePreviewUrl() {
     URL.revokeObjectURL(singlePreviewObjectUrl);
     singlePreviewObjectUrl = "";
   }
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function updateSingleZoomLabel() {
+  if (singleZoomValue) {
+    singleZoomValue.textContent = `${Math.round(singleImageState.zoom * 100)}%`;
+  }
+}
+
+function setActiveProductTab(tab) {
+  if (!["bulk", "single", "list"].includes(tab)) {
+    return;
+  }
+
+  activeProductTab = tab;
+  localStorage.setItem(PRODUCT_TAB_KEY, activeProductTab);
+  renderProductTabs();
+  updateAdminPanelsVisibility();
+}
+
+function nudgeSingleImage(axis, delta) {
+  const nextValue = clamp(singleImageState[axis] + delta, -100, 100);
+  singleImageState[axis] = nextValue;
+  applySinglePreviewTransform();
+}
+
+function adjustSingleZoom(delta) {
+  singleImageState.zoom = clamp(Number((singleImageState.zoom + delta).toFixed(2)), 1, 3);
+  updateSingleZoomLabel();
+  applySinglePreviewTransform();
 }
 
 async function fetchUrlAsFile(url) {
@@ -239,9 +302,11 @@ function resetProductForm() {
   updateImagePreview("");
   imageUrlInput.value = "";
   imageFileInput.value = "";
+  updateSingleZoomLabel();
 }
 
 function startEditingProduct(product) {
+  setActiveProductTab("single");
   editingProductId = product.id;
   productFormTitle.textContent = "Modifier le produit";
   productSubmitButton.textContent = "Enregistrer les modifications";
@@ -267,27 +332,28 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   adminProtectedArea.hidden = !unlocked;
   adminLockedState.hidden = unlocked;
   authSection.hidden = false;
-  adminLogoutButton.hidden = !unlocked || !usesRemoteData();
-  adminLoginButton.hidden = unlocked && usesRemoteData();
-  adminLoginForm.hidden = unlocked && usesRemoteData();
-  adminSessionBox.hidden = !unlocked || !usesRemoteData();
-  adminEmail.disabled = unlocked && usesRemoteData();
-  adminPassword.disabled = unlocked && usesRemoteData();
+  adminEmail.disabled = false;
+  adminPassword.disabled = false;
   updateAdminPanelsVisibility();
   renderAdminTabs();
+  renderProductTabs();
 
   if (!usesRemoteData()) {
-    adminLoginForm.hidden = false;
-    adminSessionBox.hidden = true;
-    showAuthMessage(
-      "Mode demo local actif. Ajoute la config Supabase dans js/app-config.js pour proteger cette page et synchroniser les donnees.",
-      "success",
-    );
+    adminLoginForm.hidden = true;
+    adminSessionBox.hidden = false;
+    adminSessionTitle.textContent = "Mode demo local";
+    adminSessionText.textContent = "Acces direct sur cet appareil. Ajoute Supabase pour proteger l'admin.";
+    adminLogoutButtonInline.hidden = true;
+    adminAuthStatus.hidden = true;
     return;
   }
 
   if (unlocked) {
+    adminLoginForm.hidden = true;
+    adminSessionBox.hidden = false;
+    adminSessionTitle.textContent = "Session active";
     adminSessionText.textContent = userEmail;
+    adminLogoutButtonInline.hidden = false;
     adminAuthStatus.hidden = true;
   } else {
     adminLoginForm.hidden = false;
@@ -320,10 +386,7 @@ function resetSingleImageState() {
     flipX: false,
     flipY: false,
   };
-
-  singleOffsetXInput.value = "0";
-  singleOffsetYInput.value = "0";
-  singleZoomInput.value = "1";
+  updateSingleZoomLabel();
 }
 
 function createCategoryOptions(selectedCategory) {
@@ -519,27 +582,29 @@ async function renderProducts() {
               <span>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix masque"}</span>
               <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
             </div>
-            <button
-              type="button"
-              class="button button--secondary"
-              data-toggle="${escapeHtml(product.id)}"
-            >
-              ${product.active ? "Masquer" : "Publier"}
-            </button>
-            <button
-              type="button"
-              class="button button--secondary"
-              data-edit="${escapeHtml(product.id)}"
-            >
-              Modifier
-            </button>
-            <button
-              type="button"
-              class="button button--secondary"
-              data-delete="${escapeHtml(product.id)}"
-            >
-              Supprimer
-            </button>
+            <div class="admin-item__actions">
+              <button
+                type="button"
+                class="button button--secondary button--compact"
+                data-toggle="${escapeHtml(product.id)}"
+              >
+                ${product.active ? "Masquer" : "Publier"}
+              </button>
+              <button
+                type="button"
+                class="button button--secondary button--compact"
+                data-edit="${escapeHtml(product.id)}"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                class="button button--secondary button--compact"
+                data-delete="${escapeHtml(product.id)}"
+              >
+                Supprimer
+              </button>
+            </div>
           </article>
         `,
       )
@@ -1039,6 +1104,12 @@ adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
   });
 });
 
+productsSubnav.querySelectorAll("[data-product-tab]").forEach((button) => {
+  button.addEventListener("click", () => {
+    setActiveProductTab(button.dataset.productTab);
+  });
+});
+
 orderStatusFilters.querySelectorAll("[data-order-filter]").forEach((button) => {
   button.addEventListener("click", () => {
     activeOrderFilter = button.dataset.orderFilter;
@@ -1048,19 +1119,28 @@ orderStatusFilters.querySelectorAll("[data-order-filter]").forEach((button) => {
   });
 });
 
-singleOffsetXInput.addEventListener("input", () => {
-  singleImageState.offsetX = Number(singleOffsetXInput.value);
-  applySinglePreviewTransform();
+singleMoveUpButton.addEventListener("click", () => {
+  nudgeSingleImage("offsetY", -12);
 });
 
-singleOffsetYInput.addEventListener("input", () => {
-  singleImageState.offsetY = Number(singleOffsetYInput.value);
-  applySinglePreviewTransform();
+singleMoveLeftButton.addEventListener("click", () => {
+  nudgeSingleImage("offsetX", -12);
 });
 
-singleZoomInput.addEventListener("input", () => {
-  singleImageState.zoom = Number(singleZoomInput.value);
-  applySinglePreviewTransform();
+singleMoveRightButton.addEventListener("click", () => {
+  nudgeSingleImage("offsetX", 12);
+});
+
+singleMoveDownButton.addEventListener("click", () => {
+  nudgeSingleImage("offsetY", 12);
+});
+
+singleZoomOutButton.addEventListener("click", () => {
+  adjustSingleZoom(-0.12);
+});
+
+singleZoomInButton.addEventListener("click", () => {
+  adjustSingleZoom(0.12);
 });
 
 singleRotateLeftButton.addEventListener("click", () => {
@@ -1199,6 +1279,7 @@ saveBulkProductsButton.addEventListener("click", async () => {
 
     await saveProductsBatch(newProducts);
     resetBulkDrafts();
+    setActiveProductTab("list");
     await renderProducts();
     showMessage(`${newProducts.length} produit(s) ajoutes depuis l'import en lot.`, "success");
   } catch (error) {
@@ -1242,6 +1323,7 @@ productForm.addEventListener("submit", async (event) => {
 
     await saveProduct(newProduct);
     resetProductForm();
+    setActiveProductTab("list");
     showMessage(
       isEditing ? "Produit modifie dans la vitrine." : "Produit ajoute dans la vitrine.",
       "success",
@@ -1276,18 +1358,6 @@ adminLoginForm.addEventListener("submit", async (event) => {
   }
 });
 
-adminLogoutButton.addEventListener("click", async () => {
-  try {
-    await signOutAdmin();
-  } catch (error) {
-    showAuthMessage(error.message || "Deconnexion impossible.", "error");
-  } finally {
-    adminEmail.value = "";
-    adminPassword.value = "";
-    await lockAdmin();
-  }
-});
-
 adminLogoutButtonInline.addEventListener("click", async () => {
   try {
     await signOutAdmin();
@@ -1304,7 +1374,9 @@ async function init() {
   renderBulkDrafts();
   resetProductForm();
   renderAdminTabs();
+  renderProductTabs();
   renderOrderFilters();
+  updateSingleZoomLabel();
   updateAdminPanelsVisibility();
 
   if (!usesRemoteData()) {
