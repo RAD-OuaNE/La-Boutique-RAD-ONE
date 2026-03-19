@@ -211,6 +211,9 @@ img {
 .product-card {
   padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card__image-wrap {
@@ -227,6 +230,27 @@ img {
 
 .product-card__body {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.product-card__body h3 {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card__body p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 5.6em;
 }
 
 .product-card__footer,
@@ -239,6 +263,10 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.product-card__footer {
+  margin-top: auto;
 }
 
 .badge {
@@ -463,6 +491,27 @@ img {
   padding: 12px;
   border-radius: 16px;
   background: #f7f3ee;
+}
+
+.survey-card {
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  display: grid;
+  gap: 12px;
+}
+
+.survey-card__actions,
+.survey-card__stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.survey-card__stats {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 @media (max-width: 920px) {

@@ -1,11 +1,14 @@
 import {
   deleteProduct,
+  deleteSurvey,
   formatCurrency,
   getAdminSession,
   listOrders,
   listProducts,
+  listSurveys,
   saveProduct,
   saveProductsBatch,
+  saveSurvey,
   signInAdmin,
   signOutAdmin,
   toggleProductActive,
@@ -31,6 +34,12 @@ const productCancelEdit = document.querySelector("#productCancelEdit");
 const adminProducts = document.querySelector("#adminProducts");
 const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
+const surveyForm = document.querySelector("#surveyForm");
+const surveyTitle = document.querySelector("#surveyTitle");
+const surveyDescription = document.querySelector("#surveyDescription");
+const surveyActive = document.querySelector("#surveyActive");
+const surveyMessage = document.querySelector("#surveyMessage");
+const adminSurveys = document.querySelector("#adminSurveys");
 const adminLoginForm = document.querySelector("#adminLoginForm");
 const adminEmail = document.querySelector("#adminEmail");
 const adminPassword = document.querySelector("#adminPassword");
@@ -42,6 +51,7 @@ const adminLockedState = document.querySelector("#adminLockedState");
 const bulkSection = document.querySelector("#bulkSection");
 const singleProductSection = document.querySelector("#singleProductSection");
 const productsSection = document.querySelector("#productsSection");
+const surveysSection = document.querySelector("#surveysSection");
 const ordersSection = document.querySelector("#ordersSection");
 
 const imageFileInput = document.querySelector("#productImageFile");
@@ -154,6 +164,7 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   bulkSection.hidden = false;
   singleProductSection.hidden = !unlocked;
   productsSection.hidden = !unlocked;
+  surveysSection.hidden = !unlocked;
   ordersSection.hidden = !unlocked;
   adminLogoutButton.hidden = !unlocked || !usesRemoteData();
   adminLoginButton.hidden = unlocked && usesRemoteData();
@@ -521,6 +532,99 @@ async function renderOrders() {
   }
 }
 
+function showSurveyMessage(text, type) {
+  surveyMessage.hidden = false;
+  surveyMessage.textContent = text;
+  surveyMessage.className = `message message--${type}`;
+}
+
+async function renderSurveysAdmin() {
+  if (!adminUnlocked) {
+    adminSurveys.innerHTML = '<div class="empty-state">Connexion requise.</div>';
+    return;
+  }
+
+  try {
+    const surveys = await listSurveys();
+
+    if (!surveys.length) {
+      adminSurveys.innerHTML = '<div class="empty-state">Aucun sondage pour le moment.</div>';
+      return;
+    }
+
+    adminSurveys.innerHTML = surveys
+      .map(
+        (survey) => `
+          <article class="survey-card">
+            <strong>${escapeHtml(survey.title)}</strong>
+            <p>${escapeHtml(survey.description)}</p>
+            <div class="survey-card__stats">
+              <span>Interesses: ${survey.interestedCount}</span>
+              <span>Pas interesses: ${survey.notInterestedCount}</span>
+              <span>${survey.active ? "Publie" : "Masque"}</span>
+            </div>
+            <div class="survey-card__actions">
+              <button class="button button--secondary" type="button" data-survey-toggle="${escapeHtml(
+                survey.id,
+              )}">
+                ${survey.active ? "Masquer" : "Publier"}
+              </button>
+              <button class="button button--secondary" type="button" data-survey-delete="${escapeHtml(
+                survey.id,
+              )}">
+                Supprimer
+              </button>
+            </div>
+          </article>
+        `,
+      )
+      .join("");
+
+    adminSurveys.querySelectorAll("[data-survey-toggle]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const surveysList = await listSurveys();
+        const survey = surveysList.find((item) => item.id === button.dataset.surveyToggle);
+        if (!survey) {
+          return;
+        }
+
+        try {
+          await saveSurvey({ ...survey, active: !survey.active });
+          await renderSurveysAdmin();
+        } catch (error) {
+          showSurveyMessage(error.message || "Mise a jour du sondage impossible.", "error");
+        }
+      });
+    });
+
+    adminSurveys.querySelectorAll("[data-survey-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const surveysList = await listSurveys();
+        const survey = surveysList.find((item) => item.id === button.dataset.surveyDelete);
+        if (!survey) {
+          return;
+        }
+
+        if (!window.confirm(`Supprimer le sondage "${survey.title}" ?`)) {
+          return;
+        }
+
+        try {
+          await deleteSurvey(survey.id);
+          await renderSurveysAdmin();
+          showSurveyMessage("Sondage supprime.", "success");
+        } catch (error) {
+          showSurveyMessage(error.message || "Suppression du sondage impossible.", "error");
+        }
+      });
+    });
+  } catch (error) {
+    adminSurveys.innerHTML = `<div class="empty-state">${escapeHtml(
+      error.message || "Chargement sondages impossible.",
+    )}</div>`;
+  }
+}
+
 function renderBulkDrafts() {
   saveBulkProductsButton.disabled = bulkDrafts.length === 0;
 
@@ -701,7 +805,7 @@ function renderBulkDrafts() {
 }
 
 async function refreshAdminData() {
-  await Promise.all([renderProducts(), renderOrders()]);
+  await Promise.all([renderProducts(), renderOrders(), renderSurveysAdmin()]);
 }
 
 async function unlockAdmin(userEmail = "") {
@@ -712,6 +816,7 @@ async function unlockAdmin(userEmail = "") {
 async function lockAdmin() {
   setAdminUnlocked(false);
   adminProducts.innerHTML = '<div class="empty-state">Connexion requise.</div>';
+  adminSurveys.innerHTML = '<div class="empty-state">Connexion requise.</div>';
   adminOrders.innerHTML = '<div class="empty-state">Connexion requise.</div>';
 }
 
@@ -761,6 +866,30 @@ imageUrlInput.addEventListener("input", (event) => {
 
 productCancelEdit.addEventListener("click", () => {
   resetProductForm();
+});
+
+surveyForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!adminUnlocked) {
+    showSurveyMessage("Connexion admin requise.", "error");
+    return;
+  }
+
+  try {
+    await saveSurvey({
+      title: surveyTitle.value.trim(),
+      description: surveyDescription.value.trim(),
+      active: surveyActive.checked,
+    });
+
+    surveyForm.reset();
+    surveyActive.checked = true;
+    showSurveyMessage("Sondage ajoute.", "success");
+    await renderSurveysAdmin();
+  } catch (error) {
+    showSurveyMessage(error.message || "Ajout du sondage impossible.", "error");
+  }
 });
 
 singleOffsetXInput.addEventListener("input", () => {

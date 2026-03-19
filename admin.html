@@ -190,6 +190,29 @@
         <div id="adminProducts" class="admin-list"></div>
       </section>
 
+      <section id="surveysSection" class="card">
+        <div class="section-head">
+          <h2>Sondages produits</h2>
+        </div>
+        <form id="surveyForm" class="form">
+          <label>
+            <span>Nom du produit a tester</span>
+            <input id="surveyTitle" class="input" type="text" required />
+          </label>
+          <label>
+            <span>Description courte</span>
+            <textarea id="surveyDescription" class="input textarea" rows="3"></textarea>
+          </label>
+          <label class="checkbox-row">
+            <input id="surveyActive" type="checkbox" checked />
+            <span>Publier ce sondage</span>
+          </label>
+          <button class="button" type="submit">Ajouter au sondage</button>
+        </form>
+        <p id="surveyMessage" class="message" hidden></p>
+        <div id="adminSurveys" class="admin-list"></div>
+      </section>
+
       <section id="ordersSection" class="card">
         <div class="section-head">
           <h2>Demandes clients</h2>

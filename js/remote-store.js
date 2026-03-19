@@ -5,9 +5,11 @@ import {
   getCart as getLocalCart,
   getOrders as getLocalOrders,
   getProducts as getLocalProducts,
+  getSurveys as getLocalSurveys,
   saveCart as saveLocalCart,
   saveOrder as saveLocalOrder,
   saveProducts as saveLocalProducts,
+  saveSurveys as saveLocalSurveys,
 } from "./store.js";
 import { getAppConfig, isSupabaseConfigured } from "./config.js";
 
@@ -69,6 +71,20 @@ function mapOrderRow(row) {
     phone: row.phone || "",
     note: row.note || "",
     items: Array.isArray(row.items) ? row.items : [],
+  };
+}
+
+function mapSurveyRow(row) {
+  return {
+    id: row.id,
+    title: row.title || "",
+    description: row.description || "",
+    active: row.active !== false,
+    interestedCount: Number(row.interested_count || 0),
+    notInterestedCount: Number(row.not_interested_count || 0),
+    createdAt: row.created_at
+      ? new Date(row.created_at).toLocaleString("fr-FR")
+      : new Date().toLocaleString("fr-FR"),
   };
 }
 
@@ -301,6 +317,120 @@ export async function saveOrder(order) {
   }
 
   return order;
+}
+
+export async function listSurveys({ activeOnly = false } = {}) {
+  const client = getSupabase();
+  if (!client) {
+    const surveys = getLocalSurveys();
+    return activeOnly ? surveys.filter((survey) => survey.active) : surveys;
+  }
+
+  const { data, error } = await client
+    .from("surveys")
+    .select("id,title,description,active,interested_count,not_interested_count,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message || "Lecture des sondages impossible.");
+  }
+
+  const surveys = (data || []).map(mapSurveyRow);
+  return activeOnly ? surveys.filter((survey) => survey.active) : surveys;
+}
+
+export async function saveSurvey(survey) {
+  const client = getSupabase();
+  const surveyWithDefaults = {
+    id: survey.id || `survey-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: survey.title,
+    description: survey.description || "",
+    active: survey.active !== false,
+    interestedCount: Number(survey.interestedCount || 0),
+    notInterestedCount: Number(survey.notInterestedCount || 0),
+  };
+
+  if (!client) {
+    const surveys = getLocalSurveys();
+    const nextSurveys = surveys.some((item) => item.id === surveyWithDefaults.id)
+      ? surveys.map((item) => (item.id === surveyWithDefaults.id ? surveyWithDefaults : item))
+      : [surveyWithDefaults, ...surveys];
+    saveLocalSurveys(nextSurveys);
+    return surveyWithDefaults;
+  }
+
+  const payload = {
+    id: surveyWithDefaults.id,
+    title: surveyWithDefaults.title,
+    description: surveyWithDefaults.description,
+    active: surveyWithDefaults.active,
+    interested_count: surveyWithDefaults.interestedCount,
+    not_interested_count: surveyWithDefaults.notInterestedCount,
+  };
+
+  const { error } = await client.from("surveys").upsert(payload);
+  if (error) {
+    throw new Error(error.message || "Enregistrement du sondage impossible.");
+  }
+
+  return surveyWithDefaults;
+}
+
+export async function deleteSurvey(surveyId) {
+  const client = getSupabase();
+  if (!client) {
+    const surveys = getLocalSurveys().filter((survey) => survey.id !== surveyId);
+    saveLocalSurveys(surveys);
+    return;
+  }
+
+  const { error } = await client.from("surveys").delete().eq("id", surveyId);
+  if (error) {
+    throw new Error(error.message || "Suppression du sondage impossible.");
+  }
+}
+
+export async function voteSurvey(surveyId, voteType) {
+  const client = getSupabase();
+  if (!client) {
+    const surveys = getLocalSurveys().map((survey) => {
+      if (survey.id !== surveyId) {
+        return survey;
+      }
+
+      return {
+        ...survey,
+        interestedCount:
+          survey.interestedCount + (voteType === "interested" ? 1 : 0),
+        notInterestedCount:
+          survey.notInterestedCount + (voteType === "not_interested" ? 1 : 0),
+      };
+    });
+    saveLocalSurveys(surveys);
+    return;
+  }
+
+  const { data, error: readError } = await client
+    .from("surveys")
+    .select("interested_count,not_interested_count")
+    .eq("id", surveyId)
+    .single();
+
+  if (readError) {
+    throw new Error(readError.message || "Lecture du sondage impossible.");
+  }
+
+  const payload = {
+    interested_count:
+      Number(data.interested_count || 0) + (voteType === "interested" ? 1 : 0),
+    not_interested_count:
+      Number(data.not_interested_count || 0) + (voteType === "not_interested" ? 1 : 0),
+  };
+
+  const { error } = await client.from("surveys").update(payload).eq("id", surveyId);
+  if (error) {
+    throw new Error(error.message || "Vote impossible.");
+  }
 }
 
 export async function signInAdmin(email, password) {

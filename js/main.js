@@ -4,9 +4,10 @@ import {
   formatCurrency,
   getCart,
   listProducts,
+  listSurveys,
   saveCart,
   saveOrder,
-  usesRemoteData,
+  voteSurvey,
 } from "./remote-store.js";
 
 const CATEGORY_LABELS = {
@@ -22,6 +23,7 @@ const state = {
   cart: getCart(),
   search: "",
   category: "all",
+  surveys: [],
 };
 
 const productGrid = document.querySelector("#productGrid");
@@ -35,6 +37,7 @@ const searchInput = document.querySelector("#searchInput");
 const orderForm = document.querySelector("#orderForm");
 const formMessage = document.querySelector("#formMessage");
 const dataModeHint = document.querySelector("#dataModeHint");
+const surveyList = document.querySelector("#surveyList");
 
 function escapeHtml(value) {
   return String(value || "")
@@ -48,9 +51,8 @@ function escapeHtml(value) {
 function showDataModeHint() {
   dataModeHint.hidden = false;
   dataModeHint.className = "message message--success";
-  dataModeHint.textContent = usesRemoteData()
-    ? "Mode connecte: les produits et demandes passent par Supabase."
-    : "Mode demo local: ajoute ta config Supabase dans js/app-config.js pour activer les vraies donnees.";
+  dataModeHint.textContent =
+    "Pour envoyer une demande, ajoute d'abord les produits qui t'interessent dans le panier.";
 }
 
 function showFormMessage(text, type) {
@@ -205,6 +207,59 @@ function renderCart() {
   });
 }
 
+function renderSurveys() {
+  if (!state.surveys.length) {
+    surveyList.innerHTML = '<div class="empty-state">Aucun sondage disponible pour le moment.</div>';
+    return;
+  }
+
+  surveyList.innerHTML = state.surveys
+    .map(
+      (survey) => `
+        <article class="survey-card">
+          <strong>${escapeHtml(survey.title)}</strong>
+          <p>${escapeHtml(survey.description || "Dis-nous si ce produit t'interesserait.")}</p>
+          <div class="survey-card__stats">
+            <span>Interesses: ${survey.interestedCount}</span>
+            <span>Pas interesses: ${survey.notInterestedCount}</span>
+          </div>
+          <div class="survey-card__actions">
+            <button class="button" type="button" data-vote="${escapeHtml(survey.id)}" data-vote-type="interested">
+              Interesse
+            </button>
+            <button class="button button--secondary" type="button" data-vote="${escapeHtml(
+              survey.id,
+            )}" data-vote-type="not_interested">
+              Pas pour moi
+            </button>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  surveyList.querySelectorAll("[data-vote]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const surveyId = button.dataset.vote;
+      const voteType = button.dataset.voteType;
+      button.disabled = true;
+
+      try {
+        await voteSurvey(surveyId, voteType);
+        state.surveys = await listSurveys({ activeOnly: true });
+        renderSurveys();
+      } catch (error) {
+        surveyList.insertAdjacentHTML(
+          "afterbegin",
+          `<div class="message message--error">${escapeHtml(error.message || "Vote impossible.")}</div>`,
+        );
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+}
+
 async function handleOrderSubmit(event) {
   event.preventDefault();
   const name = document.querySelector("#customerName").value.trim();
@@ -244,10 +299,21 @@ async function init() {
   showDataModeHint();
 
   try {
-    state.products = await listProducts();
+    const [productsResult, surveysResult] = await Promise.allSettled([
+      listProducts(),
+      listSurveys({ activeOnly: true }),
+    ]);
+
+    if (productsResult.status !== "fulfilled") {
+      throw productsResult.reason;
+    }
+
+    state.products = productsResult.value;
+    state.surveys = surveysResult.status === "fulfilled" ? surveysResult.value : [];
     renderFilters();
     renderCatalogue();
     renderCart();
+    renderSurveys();
   } catch (error) {
     productGrid.innerHTML = `<div class="empty-state">${escapeHtml(
       error.message || "Chargement catalogue impossible.",

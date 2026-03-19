@@ -3,6 +3,7 @@ import { defaultProducts } from "../data/products.js";
 const PRODUCTS_KEY = "vitrine-products";
 const ORDERS_KEY = "vitrine-orders";
 const CART_KEY = "vitrine-cart";
+const SURVEYS_KEY = "vitrine-surveys";
 
 export function formatEuro(value) {
   return new Intl.NumberFormat("fr-FR", {
@@ -67,6 +68,23 @@ export function saveCart(cart) {
 
 export function clearCart() {
   localStorage.removeItem(CART_KEY);
+}
+
+export function getSurveys() {
+  const raw = localStorage.getItem(SURVEYS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export function saveSurveys(surveys) {
+  localStorage.setItem(SURVEYS_KEY, JSON.stringify(surveys));
 }
 
 export function createOrder({ name, phone, note, items }) {
