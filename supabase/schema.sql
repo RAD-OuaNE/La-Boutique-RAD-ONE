@@ -22,8 +22,24 @@ create table if not exists public.orders (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.surveys (
+  id text primary key,
+  title text not null,
+  description text default '',
+  active boolean not null default true,
+  interested_count integer not null default 0,
+  not_interested_count integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
+alter table public.surveys enable row level security;
+
+grant select on public.surveys to anon, authenticated;
+revoke update on public.surveys from anon;
+grant update (interested_count, not_interested_count) on public.surveys to anon;
+grant insert, update, delete on public.surveys to authenticated;
 
 drop policy if exists "Public can read active products" on public.products;
 create policy "Public can read active products"
@@ -58,6 +74,29 @@ drop policy if exists "Authenticated can update orders" on public.orders;
 create policy "Authenticated can update orders"
 on public.orders
 for update
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Public can read active surveys" on public.surveys;
+create policy "Public can read active surveys"
+on public.surveys
+for select
+to anon, authenticated
+using (active = true);
+
+drop policy if exists "Public can vote on surveys" on public.surveys;
+create policy "Public can vote on surveys"
+on public.surveys
+for update
+to anon, authenticated
+using (active = true)
+with check (true);
+
+drop policy if exists "Authenticated can manage surveys" on public.surveys;
+create policy "Authenticated can manage surveys"
+on public.surveys
+for all
 to authenticated
 using (true)
 with check (true);
