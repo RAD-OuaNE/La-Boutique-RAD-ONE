@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vitrine produits</title>
+  <meta
+    name="description"
+    content="Catalogue simple pour presenter des produits, classer par categories et recevoir des demandes client."
+  />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero__copy">
+        <span class="hero__eyebrow">Vitrine catalogue</span>
+        <h1>La Boutique RED-ONE</h1>
+        <p>
+          Parfums, maquillage, coffrets et idees cadeaux dans une vitrine simple, claire et rapide
+          a parcourir sur mobile comme sur ordinateur.
+        </p>
+      </div>
+      <div class="hero__card">
+        <div class="stat">
+          <strong id="productCount">0</strong>
+          <span>produits visibles</span>
+        </div>
+        <div class="stat">
+          <strong id="categoryCount">0</strong>
+          <span>categories</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="catalogue">
+        <div class="toolbar card">
+          <input id="searchInput" class="input" type="search" placeholder="Rechercher un produit..." />
+          <div id="categoryFilters" class="chip-row"></div>
+        </div>
+
+        <div id="productGrid" class="product-grid"></div>
+      </section>
+
+      <aside class="sidebar">
+        <section class="card basket">
+          <div class="section-head">
+            <h2>Panier</h2>
+            <span id="cartCount" class="badge">0</span>
+          </div>
+          <div id="cartItems" class="basket__items empty-state">
+            Aucun produit pour le moment.
+          </div>
+          <div class="basket__total">
+            <span>Total indicatif</span>
+            <strong id="cartTotal">0,00 EUR</strong>
+          </div>
+        </section>
+
+        <section class="card form-card">
+          <div class="section-head">
+            <h2>Envoyer une demande</h2>
+          </div>
+          <p id="dataModeHint" class="message" hidden></p>
+          <form id="orderForm" class="form">
+            <label>
+              <span>Nom</span>
+              <input id="customerName" class="input" type="text" required />
+            </label>
+            <label>
+              <span>Telephone</span>
+              <input id="customerPhone" class="input" type="tel" required />
+            </label>
+            <label>
+              <span>Commentaire</span>
+              <textarea id="customerNote" class="input textarea" rows="4"></textarea>
+            </label>
+            <button class="button" type="submit">Envoyer la demande</button>
+          </form>
+          <p id="formMessage" class="message" hidden></p>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <a class="button button--secondary" href="./admin.html">Acces admin</a>
+    </footer>
+  </div>
+
+  <script src="./js/app-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

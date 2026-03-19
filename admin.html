@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin vitrine</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="page-shell page-shell--admin">
+    <header class="hero hero--small">
+      <div class="hero__copy">
+        <span class="hero__eyebrow">Admin demo</span>
+        <h1>Gestion produits et demandes</h1>
+        <p>
+          Cette page est une base de travail. En production, elle doit etre protegee par une vraie
+          authentification.
+        </p>
+      </div>
+      <div class="hero__card">
+        <a class="button button--secondary" href="./index.html">Retour boutique</a>
+      </div>
+    </header>
+
+    <main class="admin-layout">
+      <section id="bulkSection" class="card">
+        <div class="section-head">
+          <h2>Connexion admin</h2>
+        </div>
+        <div id="adminAuthStatus" class="message" hidden></div>
+        <form id="adminLoginForm" class="form">
+          <label>
+            <span>Email admin</span>
+            <input id="adminEmail" class="input" type="email" autocomplete="username" />
+          </label>
+          <label>
+            <span>Mot de passe</span>
+            <input id="adminPassword" class="input" type="password" autocomplete="current-password" />
+          </label>
+          <div class="bulk-actions">
+            <button id="adminLoginButton" class="button" type="submit">Se connecter</button>
+            <button id="adminLogoutButton" class="button button--secondary" type="button" hidden>
+              Se deconnecter
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section id="singleProductSection" class="card">
+        <div class="section-head">
+          <h2>Import en lot</h2>
+        </div>
+        <div id="adminProtectedArea" class="bulk-import" hidden>
+          <label>
+            <span>Choisir plusieurs photos</span>
+            <input id="bulkImageFiles" class="input" type="file" accept="image/*" multiple />
+          </label>
+
+          <div class="bulk-defaults">
+            <label>
+              <span>Categorie par defaut</span>
+              <select id="bulkDefaultCategory" class="input">
+                <option value="parfums">Parfums</option>
+                <option value="maquillage">Maquillage</option>
+                <option value="jouets">Jouets</option>
+                <option value="coffrets">Coffrets</option>
+              </select>
+            </label>
+
+            <label class="checkbox-row checkbox-row--compact">
+              <input id="bulkDefaultShowPrice" type="checkbox" checked />
+              <span>Prix visible par defaut</span>
+            </label>
+
+            <button id="applyBulkDefaults" class="button button--secondary" type="button">
+              Appliquer aux brouillons
+            </button>
+          </div>
+
+          <div class="bulk-import__hint">
+            Les images sont automatiquement redimensionnees en format vitrine 4:3. Tu peux aussi
+            ajuster le cadrage rapidement pour chaque produit.
+          </div>
+
+          <div id="bulkDrafts" class="bulk-grid empty-state">
+            Selectionne plusieurs photos pour preparer des produits en lot.
+          </div>
+
+          <div class="bulk-actions">
+            <button id="saveBulkProducts" class="button" type="button" disabled>
+              Ajouter toute la selection
+            </button>
+          </div>
+        </div>
+        <div id="adminLockedState" class="empty-state">
+          Connecte-toi pour gerer les produits et consulter les demandes.
+        </div>
+      </section>
+
+      <section id="productsSection" class="card">
+        <div class="section-head">
+          <h2>Ajouter un produit seul</h2>
+        </div>
+        <form id="productForm" class="form">
+          <label>
+            <span>Titre</span>
+            <input id="productTitle" class="input" type="text" required />
+          </label>
+          <label>
+            <span>Categorie</span>
+            <select id="productCategory" class="input">
+              <option value="parfums">Parfums</option>
+              <option value="maquillage">Maquillage</option>
+              <option value="jouets">Jouets</option>
+              <option value="coffrets">Coffrets</option>
+            </select>
+          </label>
+          <label>
+            <span>Prix</span>
+            <input id="productPrice" class="input" type="number" min="0" step="0.01" />
+          </label>
+          <label>
+            <span>Photo du produit</span>
+            <input id="productImageFile" class="input" type="file" accept="image/*" />
+          </label>
+          <label>
+            <span>Ou coller une URL d'image</span>
+            <input id="productImage" class="input" type="url" placeholder="https://..." />
+          </label>
+          <div id="imagePreviewWrap" class="image-preview" hidden>
+            <div class="image-preview__frame">
+              <img id="imagePreview" class="image-preview__img" alt="Apercu du produit" />
+            </div>
+          </div>
+          <div id="singleImageTools" class="bulk-card__fields" hidden>
+            <div class="bulk-card__crop">
+              <label>
+                <span>Deplacement horizontal</span>
+                <input id="singleOffsetX" type="range" min="-100" max="100" value="0" />
+              </label>
+              <label>
+                <span>Deplacement vertical</span>
+                <input id="singleOffsetY" type="range" min="-100" max="100" value="0" />
+              </label>
+              <label>
+                <span>Zoom</span>
+                <input id="singleZoom" type="range" min="1" max="3" step="0.05" value="1" />
+              </label>
+            </div>
+            <div class="bulk-card__toolbar">
+              <button id="singleRotateLeft" class="button button--secondary" type="button">
+                Rotation gauche
+              </button>
+              <button id="singleRotateRight" class="button button--secondary" type="button">
+                Rotation droite
+              </button>
+              <button id="singleFlipX" class="button button--secondary" type="button">
+                Miroir horizontal
+              </button>
+              <button id="singleFlipY" class="button button--secondary" type="button">
+                Miroir vertical
+              </button>
+              <button id="singleResetCrop" class="button button--secondary" type="button">
+                Reinitialiser
+              </button>
+            </div>
+          </div>
+          <label>
+            <span>Description</span>
+            <textarea id="productDescription" class="input textarea" rows="4" required></textarea>
+          </label>
+          <label class="checkbox-row">
+            <input id="productShowPrice" type="checkbox" checked />
+            <span>Afficher le prix</span>
+          </label>
+          <button class="button" type="submit">Ajouter le produit</button>
+        </form>
+        <p id="adminMessage" class="message" hidden></p>
+      </section>
+
+      <section id="ordersSection" class="card">
+        <div class="section-head">
+          <h2>Produits</h2>
+        </div>
+        <div id="adminProducts" class="admin-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Demandes clients</h2>
+        </div>
+        <div id="adminOrders" class="admin-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./js/app-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./js/admin.js"></script>
+</body>
+</html>
