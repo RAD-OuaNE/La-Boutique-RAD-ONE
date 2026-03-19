@@ -158,9 +158,6 @@ img {
   display: grid;
   gap: 16px;
   margin-bottom: 20px;
-  position: sticky;
-  top: 16px;
-  z-index: 10;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 241, 235, 0.88));
 }
@@ -426,8 +423,7 @@ img {
 }
 
 .basket {
-  position: sticky;
-  top: 124px;
+  position: static;
 }
 
 .basket__items {
