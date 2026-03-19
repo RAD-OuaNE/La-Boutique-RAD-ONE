@@ -70,6 +70,7 @@ const singleResetCropButton = document.querySelector("#singleResetCrop");
 
 const bulkFilesInput = document.querySelector("#bulkImageFiles");
 const bulkDefaultCategory = document.querySelector("#bulkDefaultCategory");
+const bulkDefaultQuantity = document.querySelector("#bulkDefaultQuantity");
 const bulkDefaultShowPrice = document.querySelector("#bulkDefaultShowPrice");
 const applyBulkDefaultsButton = document.querySelector("#applyBulkDefaults");
 const bulkDraftsContainer = document.querySelector("#bulkDrafts");
@@ -141,6 +142,7 @@ function startEditingProduct(product) {
   document.querySelector("#productTitle").value = product.title || "";
   document.querySelector("#productCategory").value = product.category || "parfums";
   document.querySelector("#productPrice").value = product.price ?? "";
+  document.querySelector("#productQuantity").value = product.quantity ?? 0;
   document.querySelector("#productDescription").value = product.description || "";
   document.querySelector("#productShowPrice").checked = Boolean(product.showPrice);
   imageUrlInput.value = product.image || "";
@@ -407,6 +409,7 @@ async function renderProducts() {
               <strong>${escapeHtml(product.title)}</strong>
               <span>${escapeHtml(CATEGORY_LABELS[product.category] || product.category)}</span>
               <span>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix masque"}</span>
+              <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
             </div>
             <button
               type="button"
@@ -677,6 +680,18 @@ function renderBulkDrafts() {
             </label>
 
             <label>
+              <span>Stock</span>
+              <input
+                class="input"
+                type="number"
+                min="0"
+                step="1"
+                data-field="quantity"
+                value="${escapeHtml(draft.quantity)}"
+              />
+            </label>
+
+            <label>
               <span>Description</span>
               <textarea class="input textarea" rows="3" data-field="description">${escapeHtml(draft.description)}</textarea>
             </label>
@@ -742,6 +757,8 @@ function renderBulkDrafts() {
         draft.showPrice = event.target.checked;
       } else if (fieldName === "offsetX" || fieldName === "offsetY" || fieldName === "zoom") {
         draft[fieldName] = Number(event.target.value);
+      } else if (fieldName === "quantity") {
+        draft[fieldName] = Math.max(0, Number(event.target.value || 0));
       } else {
         draft[fieldName] = event.target.value;
       }
@@ -955,6 +972,7 @@ bulkFilesInput.addEventListener("change", async (event) => {
           naturalHeight: metadata.naturalHeight,
           title: deriveTitleFromFilename(file.name),
           category: bulkDefaultCategory.value,
+          quantity: Math.max(0, Number(bulkDefaultQuantity.value || 0)),
           price: "",
           description: "",
           showPrice: bulkDefaultShowPrice.checked,
@@ -985,6 +1003,7 @@ applyBulkDefaultsButton.addEventListener("click", () => {
   bulkDrafts = bulkDrafts.map((draft) => ({
     ...draft,
     category: bulkDefaultCategory.value,
+    quantity: Math.max(0, Number(bulkDefaultQuantity.value || 0)),
     showPrice: bulkDefaultShowPrice.checked,
   }));
 
@@ -1031,6 +1050,7 @@ saveBulkProductsButton.addEventListener("click", async () => {
         title: draft.title.trim(),
         category: draft.category,
         price: Number(draft.price || 0),
+        quantity: Math.max(0, Number(draft.quantity || 0)),
         image: processedImage,
         description: draft.description.trim(),
         showPrice: draft.showPrice,
@@ -1074,6 +1094,7 @@ productForm.addEventListener("submit", async (event) => {
       title: document.querySelector("#productTitle").value.trim(),
       category: document.querySelector("#productCategory").value,
       price: Number(document.querySelector("#productPrice").value || 0),
+      quantity: Math.max(0, Number(document.querySelector("#productQuantity").value || 0)),
       image,
       description: document.querySelector("#productDescription").value.trim(),
       showPrice: document.querySelector("#productShowPrice").checked,

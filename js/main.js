@@ -78,7 +78,12 @@ function getCartLines() {
         return null;
       }
 
-      return { ...product, quantity };
+      const safeQuantity = Math.min(Number(quantity || 0), Number(product.quantity ?? 0));
+      if (safeQuantity <= 0) {
+        return null;
+      }
+
+      return { ...product, quantity: safeQuantity };
     })
     .filter(Boolean);
 }
@@ -125,9 +130,16 @@ function renderCatalogue() {
               <span class="badge badge--soft">${escapeHtml(CATEGORY_LABELS[product.category] || product.category)}</span>
               <h3>${escapeHtml(product.title)}</h3>
               <p>${escapeHtml(product.description)}</p>
+              <div class="survey-card__stats">
+                <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
+              </div>
               <div class="product-card__footer">
                 <strong>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix sur demande"}</strong>
-                <button class="button" type="button" data-add="${escapeHtml(product.id)}">Ajouter</button>
+                <button class="button" type="button" data-add="${escapeHtml(product.id)}" ${
+                  product.quantity <= 0 ? "disabled" : ""
+                }>
+                  ${product.quantity > 0 ? "Ajouter" : "Epuise"}
+                </button>
               </div>
             </div>
           </article>
@@ -139,7 +151,18 @@ function renderCatalogue() {
   productGrid.querySelectorAll("[data-add]").forEach((button) => {
     button.addEventListener("click", () => {
       const productId = button.dataset.add;
-      state.cart[productId] = (state.cart[productId] || 0) + 1;
+      const product = state.products.find((item) => item.id === productId);
+      if (!product || Number(product.quantity ?? 0) <= 0) {
+        return;
+      }
+
+      const nextQuantity = (state.cart[productId] || 0) + 1;
+      if (nextQuantity > Number(product.quantity ?? 0)) {
+        showFormMessage("La quantite demandee depasse le stock disponible.", "error");
+        return;
+      }
+
+      state.cart[productId] = nextQuantity;
       saveCart(state.cart);
       renderCart();
     });
@@ -151,6 +174,11 @@ function renderCatalogue() {
 
 function renderCart() {
   const lines = getCartLines();
+  const validCart = Object.fromEntries(lines.map((item) => [item.id, item.quantity]));
+  if (JSON.stringify(validCart) !== JSON.stringify(state.cart)) {
+    state.cart = validCart;
+    saveCart(state.cart);
+  }
   const totalQuantity = lines.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = lines.reduce(
     (sum, item) => sum + (item.showPrice ? item.price * item.quantity : 0),
@@ -200,7 +228,18 @@ function renderCart() {
   cartItems.querySelectorAll("[data-increase]").forEach((button) => {
     button.addEventListener("click", () => {
       const productId = button.dataset.increase;
-      state.cart[productId] += 1;
+      const product = state.products.find((item) => item.id === productId);
+      if (!product) {
+        return;
+      }
+
+      const nextQuantity = state.cart[productId] + 1;
+      if (nextQuantity > Number(product.quantity ?? 0)) {
+        showFormMessage("La quantite demandee depasse le stock disponible.", "error");
+        return;
+      }
+
+      state.cart[productId] = nextQuantity;
       saveCart(state.cart);
       renderCart();
     });
@@ -287,8 +326,10 @@ async function handleOrderSubmit(event) {
     await saveOrder(order);
     clearCart();
     state.cart = {};
+    state.products = await listProducts();
     orderForm.reset();
     showFormMessage(`Demande envoyee sous ${order.id}.`, "success");
+    renderCatalogue();
     renderCart();
   } catch (error) {
     showFormMessage(error.message || "Envoi impossible pour le moment.", "error");

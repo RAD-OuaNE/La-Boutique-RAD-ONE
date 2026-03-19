@@ -41,6 +41,7 @@ function mapProductRow(row) {
     category: row.category || "parfums",
     description: row.description || "",
     price: Number(row.price || 0),
+    quantity: Number(row.quantity ?? 0),
     showPrice: Boolean(row.show_price),
     active: row.active !== false,
     image: row.image || "",
@@ -54,6 +55,7 @@ function mapProductInput(product) {
     category: product.category,
     description: product.description,
     price: Number(product.price || 0),
+    quantity: Math.max(0, Number(product.quantity ?? 0)),
     show_price: Boolean(product.showPrice),
     active: product.active !== false,
     image: product.image,
@@ -297,11 +299,53 @@ export async function listOrders() {
 export async function saveOrder(order) {
   const client = getSupabase();
   if (!client) {
+    const products = getLocalProducts();
+    const nextProducts = products.map((product) => {
+      const line = order.items.find((item) => item.productId === product.id);
+      if (!line) {
+        return product;
+      }
+
+      const remaining = Math.max(0, Number(product.quantity ?? 0) - Number(line.quantity || 0));
+      return {
+        ...product,
+        quantity: remaining,
+      };
+    });
+
+    const hasInsufficientStock = order.items.some((item) => {
+      const product = products.find((candidate) => candidate.id === item.productId);
+      return !product || Number(product.quantity ?? 0) < Number(item.quantity || 0);
+    });
+
+    if (hasInsufficientStock) {
+      throw new Error("Un ou plusieurs produits ne sont plus disponibles en quantite suffisante.");
+    }
+
+    saveLocalProducts(nextProducts);
     saveLocalOrder(order);
     return order;
   }
 
   const config = getAppConfig();
+  const productIds = [...new Set(order.items.map((item) => item.productId))];
+  const { data: productsData, error: productsError } = await client
+    .from(config.productsTable)
+    .select("id,quantity")
+    .in("id", productIds);
+
+  if (productsError) {
+    throw new Error(productsError.message || "Verification du stock impossible.");
+  }
+
+  const productsById = new Map((productsData || []).map((product) => [product.id, product]));
+  for (const item of order.items) {
+    const product = productsById.get(item.productId);
+    if (!product || Number(product.quantity ?? 0) < Number(item.quantity || 0)) {
+      throw new Error(`Stock insuffisant pour ${item.title}.`);
+    }
+  }
+
   const payload = {
     id: order.id,
     status: order.status,
@@ -314,6 +358,19 @@ export async function saveOrder(order) {
   const { error } = await client.from(config.ordersTable).insert(payload);
   if (error) {
     throw new Error(error.message || "Envoi de la demande impossible.");
+  }
+
+  for (const item of order.items) {
+    const product = productsById.get(item.productId);
+    const nextQuantity = Math.max(0, Number(product.quantity ?? 0) - Number(item.quantity || 0));
+    const { error: updateError } = await client
+      .from(config.productsTable)
+      .update({ quantity: nextQuantity })
+      .eq("id", item.productId);
+
+    if (updateError) {
+      throw new Error(updateError.message || "Mise a jour du stock impossible.");
+    }
   }
 
   return order;

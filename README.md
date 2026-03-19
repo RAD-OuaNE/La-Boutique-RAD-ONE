@@ -13,6 +13,7 @@ Vitrine catalogue statique pour Netlify, avec mode demo local et mode connecte v
 - admin avec connexion Supabase
 - ajout produit simple ou import en lot
 - recadrage photo 4:3 avant envoi
+- gestion du stock et etat epuise
 - repli automatique en mode local si Supabase n'est pas configure
 
 ## Structure

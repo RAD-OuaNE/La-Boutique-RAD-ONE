@@ -5,6 +5,7 @@ export const defaultProducts = [
     category: "parfums",
     description: "Coffret parfum avec presentation premium pour cadeau.",
     price: 59.9,
+    quantity: 5,
     showPrice: true,
     active: true,
     image:
@@ -16,6 +17,7 @@ export const defaultProducts = [
     category: "maquillage",
     description: "Rouge a levres longue tenue pour usage quotidien.",
     price: 14.5,
+    quantity: 8,
     showPrice: true,
     active: true,
     image:
@@ -27,6 +29,7 @@ export const defaultProducts = [
     category: "jouets",
     description: "Jouet enfant robuste et colore pour les periodes cadeaux.",
     price: 24.9,
+    quantity: 3,
     showPrice: true,
     active: true,
     image:

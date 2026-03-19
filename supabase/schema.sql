@@ -6,11 +6,15 @@ create table if not exists public.products (
   category text not null,
   description text default '',
   price numeric(10, 2) default 0,
+  quantity integer not null default 0,
   show_price boolean not null default true,
   active boolean not null default true,
   image text not null,
   created_at timestamptz not null default now()
 );
+
+alter table public.products
+add column if not exists quantity integer not null default 0;
 
 create table if not exists public.orders (
   id text primary key,
@@ -101,9 +105,9 @@ to authenticated
 using (true)
 with check (true);
 
-insert into public.products (id, title, category, description, price, show_price, active, image)
+insert into public.products (id, title, category, description, price, quantity, show_price, active, image)
 values
-  ('prod-1', 'Coffret Elegance Nuit', 'parfums', 'Coffret parfum avec presentation premium pour cadeau.', 59.90, true, true, 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=1200&q=80'),
-  ('prod-2', 'Rouge Velours Signature', 'maquillage', 'Rouge a levres longue tenue pour usage quotidien.', 14.50, true, true, 'https://images.unsplash.com/photo-1583241800698-9a4cb60d6f23?auto=format&fit=crop&w=1200&q=80'),
-  ('prod-3', 'Camion Chantier Junior', 'jouets', 'Jouet enfant robuste et colore pour les periodes cadeaux.', 24.90, true, true, 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80')
+  ('prod-1', 'Coffret Elegance Nuit', 'parfums', 'Coffret parfum avec presentation premium pour cadeau.', 59.90, 5, true, true, 'https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=1200&q=80'),
+  ('prod-2', 'Rouge Velours Signature', 'maquillage', 'Rouge a levres longue tenue pour usage quotidien.', 14.50, 8, true, true, 'https://images.unsplash.com/photo-1583241800698-9a4cb60d6f23?auto=format&fit=crop&w=1200&q=80'),
+  ('prod-3', 'Camion Chantier Junior', 'jouets', 'Jouet enfant robuste et colore pour les periodes cadeaux.', 24.90, 3, true, true, 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80')
 on conflict (id) do nothing;

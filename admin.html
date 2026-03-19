@@ -67,6 +67,11 @@
               </select>
             </label>
 
+            <label>
+              <span>Stock par defaut</span>
+              <input id="bulkDefaultQuantity" class="input" type="number" min="0" step="1" value="1" />
+            </label>
+
             <label class="checkbox-row checkbox-row--compact">
               <input id="bulkDefaultShowPrice" type="checkbox" checked />
               <span>Prix visible par defaut</span>
@@ -118,6 +123,10 @@
           <label>
             <span>Prix</span>
             <input id="productPrice" class="input" type="number" min="0" step="0.01" />
+          </label>
+          <label>
+            <span>Stock disponible</span>
+            <input id="productQuantity" class="input" type="number" min="0" step="1" value="1" />
           </label>
           <label>
             <span>Photo du produit</span>
