@@ -438,6 +438,8 @@ img {
 
 .product-card__description--expanded {
   display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: initial;
   overflow: visible;
   min-height: 0;
 }
