@@ -66,6 +66,7 @@
       <section id="productsSubnavSection" class="card" data-admin-panel="products">
         <div id="productsSubnav" class="view-switch" aria-label="Navigation produits">
           <button class="chip" type="button" data-product-tab="bulk">Import en lot</button>
+          <button class="chip" type="button" data-product-tab="json">Import JSON</button>
           <button class="chip" type="button" data-product-tab="single">Ajouter un produit</button>
           <button class="chip" type="button" data-product-tab="list">Liste produits</button>
         </div>
@@ -129,6 +130,34 @@
         </div>
         <div id="adminLockedState" class="empty-state">
           Connecte-toi pour gerer les produits et consulter les demandes.
+        </div>
+      </section>
+
+      <section id="jsonImportSection" class="card" data-admin-panel="products" data-product-panel="json">
+        <div class="section-head">
+          <h2>Import JSON</h2>
+        </div>
+        <div class="bulk-import">
+          <label>
+            <span>Choisir un fichier JSON</span>
+            <input id="jsonImportFile" class="input" type="file" accept=".json,application/json" />
+          </label>
+          <label>
+            <span>Ou coller le JSON</span>
+            <textarea
+              id="jsonImportText"
+              class="input textarea"
+              rows="10"
+              placeholder='[{"id":"prod-exemple","title":"Nom du produit","category":"soins_lissage","description":"Description","price":0,"quantity":1,"showPrice":false,"active":true,"image":"https://..."}]'
+            ></textarea>
+          </label>
+          <div class="bulk-actions">
+            <button id="importJsonButton" class="button" type="button">Importer les produits JSON</button>
+          </div>
+          <div class="empty-state">
+            Le fichier doit contenir un tableau JSON de produits. Les images peuvent etre des URLs
+            publiques, des chemins locaux du site ou des images base64.
+          </div>
         </div>
       </section>
 

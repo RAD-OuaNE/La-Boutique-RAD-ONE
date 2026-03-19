@@ -78,6 +78,7 @@ const adminLockedState = document.querySelector("#adminLockedState");
 const authSection = document.querySelector("#authSection");
 const productsSubnavSection = document.querySelector("#productsSubnavSection");
 const bulkSection = document.querySelector("#bulkSection");
+const jsonImportSection = document.querySelector("#jsonImportSection");
 const singleProductSection = document.querySelector("#singleProductSection");
 const productsSection = document.querySelector("#productsSection");
 const surveysSection = document.querySelector("#surveysSection");
@@ -110,6 +111,9 @@ const bulkDefaultShowPrice = document.querySelector("#bulkDefaultShowPrice");
 const applyBulkDefaultsButton = document.querySelector("#applyBulkDefaults");
 const bulkDraftsContainer = document.querySelector("#bulkDrafts");
 const saveBulkProductsButton = document.querySelector("#saveBulkProducts");
+const jsonImportFile = document.querySelector("#jsonImportFile");
+const jsonImportText = document.querySelector("#jsonImportText");
+const importJsonButton = document.querySelector("#importJsonButton");
 
 let pendingSingleFile = null;
 let bulkDrafts = [];
@@ -120,7 +124,7 @@ let imageLoadToken = 0;
 let activeAdminTab = ["products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
   ? localStorage.getItem(ADMIN_TAB_KEY)
   : "products";
-let activeProductTab = ["bulk", "single", "list"].includes(localStorage.getItem(PRODUCT_TAB_KEY))
+let activeProductTab = ["bulk", "json", "single", "list"].includes(localStorage.getItem(PRODUCT_TAB_KEY))
   ? localStorage.getItem(PRODUCT_TAB_KEY)
   : "bulk";
 let activeOrderFilter = ["all", ...ORDER_STATUSES].includes(localStorage.getItem(ORDER_FILTER_KEY))
@@ -227,7 +231,7 @@ function updateSingleZoomLabel() {
 }
 
 function setActiveProductTab(tab) {
-  if (!["bulk", "single", "list"].includes(tab)) {
+  if (!["bulk", "json", "single", "list"].includes(tab)) {
     return;
   }
 
@@ -429,6 +433,87 @@ function deriveTitleFromFilename(filename) {
     .replace(/[-_]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function slugifyProductId(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function createImportedProductId(product, index) {
+  const base =
+    slugifyProductId(product.id) ||
+    slugifyProductId(product.title) ||
+    `produit-${Date.now()}-${index + 1}`;
+  return base.startsWith("prod-") ? base : `prod-${base}`;
+}
+
+function normalizeImportedCategory(category) {
+  const normalized = String(category || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+
+  return CATEGORY_LABELS[normalized] ? normalized : "autres";
+}
+
+function normalizeImportedDescription(description) {
+  return String(description || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeImportedProduct(product, index) {
+  if (!product || typeof product !== "object" || Array.isArray(product)) {
+    throw new Error(`Produit ${index + 1}: format invalide.`);
+  }
+
+  const title = String(product.title || "").trim();
+  const image = String(product.image || "").trim();
+
+  if (!title) {
+    throw new Error(`Produit ${index + 1}: titre manquant.`);
+  }
+
+  if (!image) {
+    throw new Error(`Produit ${index + 1}: image manquante.`);
+  }
+
+  const parsedPrice = Number(product.price ?? 0);
+  const parsedQuantity = Math.max(0, Number(product.quantity ?? 0));
+  const showPriceValue =
+    typeof product.showPrice === "boolean"
+      ? product.showPrice
+      : typeof product.show_price === "boolean"
+        ? product.show_price
+        : true;
+
+  return {
+    id: createImportedProductId(product, index),
+    title,
+    category: normalizeImportedCategory(product.category),
+    description: normalizeImportedDescription(product.description),
+    price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
+    quantity: Number.isFinite(parsedQuantity) ? Math.round(parsedQuantity) : 0,
+    showPrice: showPriceValue,
+    active: product.active !== false,
+    image,
+  };
+}
+
+function getJsonImportContent() {
+  const textValue = jsonImportText.value.trim();
+  if (textValue) {
+    return textValue;
+  }
+
+  return "";
 }
 
 function normalizeRotation(rotation) {
@@ -1063,6 +1148,48 @@ function renderBulkDrafts() {
   });
 }
 
+async function importProductsFromJson() {
+  if (!adminUnlocked) {
+    showMessage("Connexion admin requise.", "error");
+    return;
+  }
+
+  const rawContent = getJsonImportContent();
+  if (!rawContent) {
+    showMessage("Ajoute un fichier JSON ou colle le contenu dans la zone prevue.", "error");
+    return;
+  }
+
+  importJsonButton.disabled = true;
+  showMessage("Analyse du fichier JSON en cours...", "success");
+
+  try {
+    const parsed = JSON.parse(rawContent);
+    if (!Array.isArray(parsed)) {
+      throw new Error("Le JSON doit contenir un tableau de produits.");
+    }
+
+    if (!parsed.length) {
+      throw new Error("Le tableau JSON est vide.");
+    }
+
+    const normalizedProducts = parsed.map((product, index) =>
+      normalizeImportedProduct(product, index),
+    );
+
+    await saveProductsBatch(normalizedProducts);
+    jsonImportText.value = "";
+    jsonImportFile.value = "";
+    setActiveProductTab("list");
+    await renderProducts();
+    showMessage(`${normalizedProducts.length} produit(s) importes depuis le JSON.`, "success");
+  } catch (error) {
+    showMessage(error.message || "Import JSON impossible.", "error");
+  } finally {
+    importJsonButton.disabled = false;
+  }
+}
+
 async function refreshAdminData() {
   await Promise.all([renderProducts(), renderOrders(), renderSurveysAdmin()]);
 }
@@ -1108,6 +1235,24 @@ imageFileInput.addEventListener("change", (event) => {
 imageUrlInput.addEventListener("change", async (event) => {
   imageFileInput.value = "";
   await setSingleImageFromUrl(event.target.value);
+});
+
+jsonImportFile.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    jsonImportText.value = await file.text();
+    showMessage(`Fichier JSON charge: ${file.name}`, "success");
+  } catch {
+    showMessage("Lecture du fichier JSON impossible.", "error");
+  }
+});
+
+importJsonButton.addEventListener("click", async () => {
+  await importProductsFromJson();
 });
 
 productCancelEdit.addEventListener("click", () => {
