@@ -55,7 +55,15 @@
             </button>
           </div>
         </form>
-        <div id="adminSessionBox" class="empty-state" hidden></div>
+        <div id="adminSessionBox" class="admin-session" hidden>
+          <div>
+            <strong>Session active</strong>
+            <div id="adminSessionText" class="admin-session__text"></div>
+          </div>
+          <button id="adminLogoutButtonInline" class="button button--secondary" type="button">
+            Se deconnecter
+          </button>
+        </div>
       </section>
 
       <section id="bulkSection" class="card" data-admin-panel="products">
@@ -237,6 +245,15 @@
       <section id="ordersSection" class="card" data-admin-panel="orders">
         <div class="section-head">
           <h2>Demandes clients</h2>
+        </div>
+        <div id="orderStatusFilters" class="view-switch" aria-label="Filtrer les demandes">
+          <button class="chip" type="button" data-order-filter="all">Toutes</button>
+          <button class="chip" type="button" data-order-filter="Nouvelle">Nouvelles</button>
+          <button class="chip" type="button" data-order-filter="En preparation">En preparation</button>
+          <button class="chip" type="button" data-order-filter="Prete">Pretes</button>
+          <button class="chip" type="button" data-order-filter="Livree">Livrees</button>
+          <button class="chip" type="button" data-order-filter="En attente de paiement">Attente paiement</button>
+          <button class="chip" type="button" data-order-filter="Payee">Payees</button>
         </div>
         <div id="adminOrders" class="admin-list"></div>
       </section>

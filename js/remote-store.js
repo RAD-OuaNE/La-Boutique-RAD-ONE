@@ -299,6 +299,27 @@ export async function listOrders() {
   return (data || []).map(mapOrderRow);
 }
 
+export async function updateOrderStatus(orderId, status) {
+  const client = getSupabase();
+  if (!client) {
+    const orders = getLocalOrders().map((order) =>
+      order.id === orderId ? { ...order, status } : order,
+    );
+    localStorage.setItem("vitrine-orders", JSON.stringify(orders));
+    return;
+  }
+
+  const config = getAppConfig();
+  const { error } = await client
+    .from(config.ordersTable)
+    .update({ status })
+    .eq("id", orderId);
+
+  if (error) {
+    throw new Error(error.message || "Mise a jour du statut impossible.");
+  }
+}
+
 export async function saveOrder(order) {
   const client = getSupabase();
   if (!client) {

@@ -660,6 +660,23 @@ img {
   font-size: 0.92rem;
 }
 
+.admin-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+}
+
+.admin-session__text {
+  margin-top: 6px;
+  color: var(--muted);
+  word-break: break-word;
+}
+
 @media (max-width: 920px) {
   .hero,
   .hero--small,

@@ -12,6 +12,7 @@ import {
   signInAdmin,
   signOutAdmin,
   toggleProductActive,
+  updateOrderStatus,
   usesRemoteData,
 } from "./remote-store.js";
 
@@ -27,6 +28,15 @@ const TARGET_IMAGE_HEIGHT = 900;
 const PREVIEW_WIDTH = 320;
 const PREVIEW_HEIGHT = 240;
 const ADMIN_TAB_KEY = "radone-admin-tab";
+const ORDER_FILTER_KEY = "radone-order-filter";
+const ORDER_STATUSES = [
+  "Nouvelle",
+  "En preparation",
+  "Prete",
+  "Livree",
+  "En attente de paiement",
+  "Payee",
+];
 
 const productForm = document.querySelector("#productForm");
 const productFormTitle = document.querySelector("#productFormTitle");
@@ -36,6 +46,7 @@ const adminProducts = document.querySelector("#adminProducts");
 const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
 const adminNav = document.querySelector("#adminNav");
+const orderStatusFilters = document.querySelector("#orderStatusFilters");
 const surveyForm = document.querySelector("#surveyForm");
 const surveyTitle = document.querySelector("#surveyTitle");
 const surveyDescription = document.querySelector("#surveyDescription");
@@ -49,6 +60,8 @@ const adminLoginButton = document.querySelector("#adminLoginButton");
 const adminLogoutButton = document.querySelector("#adminLogoutButton");
 const adminAuthStatus = document.querySelector("#adminAuthStatus");
 const adminSessionBox = document.querySelector("#adminSessionBox");
+const adminSessionText = document.querySelector("#adminSessionText");
+const adminLogoutButtonInline = document.querySelector("#adminLogoutButtonInline");
 const adminProtectedArea = document.querySelector("#adminProtectedArea");
 const adminLockedState = document.querySelector("#adminLockedState");
 const authSection = document.querySelector("#authSection");
@@ -90,6 +103,9 @@ let imageLoadToken = 0;
 let activeAdminTab = ["products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
   ? localStorage.getItem(ADMIN_TAB_KEY)
   : "products";
+let activeOrderFilter = ["all", ...ORDER_STATUSES].includes(localStorage.getItem(ORDER_FILTER_KEY))
+  ? localStorage.getItem(ORDER_FILTER_KEY)
+  : "all";
 let singleImageState = {
   naturalWidth: PREVIEW_WIDTH,
   naturalHeight: PREVIEW_HEIGHT,
@@ -125,6 +141,12 @@ function showAuthMessage(text, type) {
 function renderAdminTabs() {
   adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
     button.classList.toggle("chip--active", button.dataset.adminTab === activeAdminTab);
+  });
+}
+
+function renderOrderFilters() {
+  orderStatusFilters.querySelectorAll("[data-order-filter]").forEach((button) => {
+    button.classList.toggle("chip--active", button.dataset.orderFilter === activeOrderFilter);
   });
 }
 
@@ -265,8 +287,8 @@ function setAdminUnlocked(unlocked, userEmail = "") {
   }
 
   if (unlocked) {
-    adminSessionBox.textContent = `Connecte en tant que ${userEmail}.`;
-    showAuthMessage(`Connecte en tant que ${userEmail}.`, "success");
+    adminSessionText.textContent = userEmail;
+    adminAuthStatus.hidden = true;
   } else {
     adminLoginForm.hidden = false;
     adminSessionBox.hidden = true;
@@ -585,13 +607,17 @@ async function renderOrders() {
 
   try {
     const orders = await listOrders();
+    const visibleOrders =
+      activeOrderFilter === "all"
+        ? orders
+        : orders.filter((order) => order.status === activeOrderFilter);
 
-    if (!orders.length) {
+    if (!visibleOrders.length) {
       adminOrders.innerHTML = '<div class="empty-state">Aucune demande enregistree.</div>';
       return;
     }
 
-    adminOrders.innerHTML = orders
+    adminOrders.innerHTML = visibleOrders
       .map(
         (order) => `
           <article class="order-card">
@@ -601,6 +627,17 @@ async function renderOrders() {
             </div>
             <p><strong>${escapeHtml(order.customerName)}</strong> - ${escapeHtml(order.phone)}</p>
             <p>${escapeHtml(order.createdAt)}</p>
+            <label>
+              <span>Etat de la commande</span>
+              <select class="input" data-order-status="${escapeHtml(order.id)}">
+                ${ORDER_STATUSES.map(
+                  (status) =>
+                    `<option value="${escapeHtml(status)}" ${
+                      order.status === status ? "selected" : ""
+                    }>${escapeHtml(status)}</option>`,
+                ).join("")}
+              </select>
+            </label>
             <ul class="order-card__list">
               ${order.items
                 .map(
@@ -614,6 +651,17 @@ async function renderOrders() {
         `,
       )
       .join("");
+
+    adminOrders.querySelectorAll("[data-order-status]").forEach((select) => {
+      select.addEventListener("change", async () => {
+        try {
+          await updateOrderStatus(select.dataset.orderStatus, select.value);
+          await renderOrders();
+        } catch (error) {
+          showMessage(error.message || "Mise a jour du statut impossible.", "error");
+        }
+      });
+    });
   } catch (error) {
     adminOrders.innerHTML = `<div class="empty-state">${escapeHtml(
       error.message || "Chargement demandes impossible.",
@@ -991,6 +1039,15 @@ adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
   });
 });
 
+orderStatusFilters.querySelectorAll("[data-order-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeOrderFilter = button.dataset.orderFilter;
+    localStorage.setItem(ORDER_FILTER_KEY, activeOrderFilter);
+    renderOrderFilters();
+    renderOrders();
+  });
+});
+
 singleOffsetXInput.addEventListener("input", () => {
   singleImageState.offsetX = Number(singleOffsetXInput.value);
   applySinglePreviewTransform();
@@ -1231,10 +1288,23 @@ adminLogoutButton.addEventListener("click", async () => {
   }
 });
 
+adminLogoutButtonInline.addEventListener("click", async () => {
+  try {
+    await signOutAdmin();
+  } catch (error) {
+    showAuthMessage(error.message || "Deconnexion impossible.", "error");
+  } finally {
+    adminEmail.value = "";
+    adminPassword.value = "";
+    await lockAdmin();
+  }
+});
+
 async function init() {
   renderBulkDrafts();
   resetProductForm();
   renderAdminTabs();
+  renderOrderFilters();
   updateAdminPanelsVisibility();
 
   if (!usesRemoteData()) {
