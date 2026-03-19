@@ -24,11 +24,11 @@
       <div class="hero__card">
         <div class="stat">
           <strong id="productCount">0</strong>
-          <span>produits visibles</span>
+          <span>produits disponibles en vitrine</span>
         </div>
         <div class="stat">
           <strong id="categoryCount">0</strong>
-          <span>categories</span>
+          <span>categories proposees</span>
         </div>
       </div>
     </header>
@@ -37,7 +37,14 @@
       <section class="catalogue">
         <div class="toolbar card">
           <input id="searchInput" class="input" type="search" placeholder="Rechercher un produit..." />
-          <div id="categoryFilters" class="chip-row"></div>
+          <div class="toolbar__row">
+            <div id="categoryFilters" class="chip-row"></div>
+            <div id="viewModeControls" class="view-switch" aria-label="Mode d'affichage">
+              <button class="chip" type="button" data-view="large">Grandes vignettes</button>
+              <button class="chip" type="button" data-view="compact">Petites vignettes</button>
+              <button class="chip" type="button" data-view="list">Liste</button>
+            </div>
+          </div>
         </div>
 
         <div id="productGrid" class="product-grid"></div>

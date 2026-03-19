@@ -19,6 +19,12 @@ const CATEGORY_LABELS = {
 };
 
 const SURVEY_VOTES_KEY = "vitrine-survey-votes";
+const VIEW_MODE_KEY = "vitrine-view-mode";
+
+function getInitialViewMode() {
+  const stored = localStorage.getItem(VIEW_MODE_KEY);
+  return ["large", "compact", "list"].includes(stored) ? stored : "large";
+}
 
 const state = {
   products: [],
@@ -26,6 +32,7 @@ const state = {
   search: "",
   category: "all",
   surveys: [],
+  viewMode: getInitialViewMode(),
 };
 
 const productGrid = document.querySelector("#productGrid");
@@ -40,6 +47,7 @@ const orderForm = document.querySelector("#orderForm");
 const formMessage = document.querySelector("#formMessage");
 const dataModeHint = document.querySelector("#dataModeHint");
 const surveyList = document.querySelector("#surveyList");
+const viewModeControls = document.querySelector("#viewModeControls");
 
 function getSurveyVotes() {
   try {
@@ -127,8 +135,15 @@ function renderFilters() {
   });
 }
 
+function renderViewModeControls() {
+  viewModeControls.querySelectorAll("[data-view]").forEach((button) => {
+    button.classList.toggle("chip--active", button.dataset.view === state.viewMode);
+  });
+}
+
 function renderCatalogue() {
   const visibleProducts = getVisibleProducts();
+  productGrid.className = `product-grid product-grid--${state.viewMode}`;
 
   if (!visibleProducts.length) {
     productGrid.innerHTML = '<div class="empty-state">Aucun produit ne correspond a la recherche.</div>';
@@ -136,7 +151,7 @@ function renderCatalogue() {
     productGrid.innerHTML = visibleProducts
       .map(
         (product) => `
-          <article class="product-card card">
+          <article class="product-card product-card--${state.viewMode} card">
             <div class="product-card__image-wrap">
               <img class="product-card__image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
             </div>
@@ -184,6 +199,7 @@ function renderCatalogue() {
 
   productCount.textContent = String(state.products.length);
   categoryCount.textContent = String(new Set(state.products.map((product) => product.category)).size);
+  renderViewModeControls();
 }
 
 function renderCart() {
@@ -394,6 +410,14 @@ async function init() {
 searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
   renderCatalogue();
+});
+
+viewModeControls.querySelectorAll("[data-view]").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.viewMode = button.dataset.view;
+    localStorage.setItem(VIEW_MODE_KEY, state.viewMode);
+    renderCatalogue();
+  });
 });
 
 orderForm.addEventListener("submit", handleOrderSubmit);
