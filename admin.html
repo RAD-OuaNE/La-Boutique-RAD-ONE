@@ -28,6 +28,7 @@
 
     <section class="card">
       <div id="adminNav" class="view-switch" aria-label="Navigation admin">
+        <button class="chip" type="button" data-admin-tab="store">Boutique</button>
         <button class="chip" type="button" data-admin-tab="products">Produits</button>
         <button class="chip" type="button" data-admin-tab="surveys">Sondages</button>
         <button class="chip" type="button" data-admin-tab="orders">Demandes clients</button>
@@ -71,6 +72,42 @@
           <button class="chip" type="button" data-product-tab="single">Ajouter un produit</button>
           <button class="chip" type="button" data-product-tab="list">Liste produits</button>
         </div>
+      </section>
+
+      <section id="storeSettingsSection" class="card" data-admin-panel="store">
+        <div class="section-head">
+          <h2>Coordonnees de la boutique</h2>
+        </div>
+        <form id="storeSettingsForm" class="form">
+          <label>
+            <span>WhatsApp</span>
+            <input
+              id="storeWhatsapp"
+              class="input"
+              type="text"
+              placeholder="+33 6 12 34 56 78 ou https://wa.me/..."
+            />
+          </label>
+          <label>
+            <span>Snapchat</span>
+            <input
+              id="storeSnapchat"
+              class="input"
+              type="text"
+              placeholder="pseudo_snap ou https://www.snapchat.com/add/..."
+            />
+          </label>
+          <div class="empty-state">
+            Tu peux saisir soit un numero / pseudo simple, soit un lien complet. Ces icones
+            s'afficheront ensuite dans la vignette d'accueil de la boutique.
+          </div>
+          <div class="bulk-actions">
+            <button id="storeSettingsSubmit" class="button" type="submit">
+              Enregistrer les coordonnees
+            </button>
+          </div>
+        </form>
+        <p id="storeSettingsMessage" class="message" hidden></p>
       </section>
 
       <section id="bulkSection" class="card" data-admin-panel="products" data-product-panel="bulk">

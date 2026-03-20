@@ -3,6 +3,7 @@ const DEFAULT_CONFIG = {
   supabaseAnonKey: "",
   productsTable: "products",
   ordersTable: "orders",
+  settingsTable: "site_settings",
   storageBucket: "product-images",
   storageFolder: "products",
 };

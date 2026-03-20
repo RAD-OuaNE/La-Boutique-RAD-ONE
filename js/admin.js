@@ -3,11 +3,13 @@ import {
   deleteSurvey,
   formatCurrency,
   getAdminSession,
+  getSiteSettings,
   listOrders,
   listProducts,
   listSurveys,
   saveProduct,
   saveProductsBatch,
+  saveSiteSettings,
   saveSurvey,
   signInAdmin,
   signOutAdmin,
@@ -57,6 +59,10 @@ const adminOrders = document.querySelector("#adminOrders");
 const adminMessage = document.querySelector("#adminMessage");
 const adminNav = document.querySelector("#adminNav");
 const productsSubnav = document.querySelector("#productsSubnav");
+const storeSettingsForm = document.querySelector("#storeSettingsForm");
+const storeWhatsapp = document.querySelector("#storeWhatsapp");
+const storeSnapchat = document.querySelector("#storeSnapchat");
+const storeSettingsMessage = document.querySelector("#storeSettingsMessage");
 const orderStatusFilters = document.querySelector("#orderStatusFilters");
 const surveyForm = document.querySelector("#surveyForm");
 const surveyTitle = document.querySelector("#surveyTitle");
@@ -77,6 +83,7 @@ const adminProtectedArea = document.querySelector("#adminProtectedArea");
 const adminLockedState = document.querySelector("#adminLockedState");
 const authSection = document.querySelector("#authSection");
 const productsSubnavSection = document.querySelector("#productsSubnavSection");
+const storeSettingsSection = document.querySelector("#storeSettingsSection");
 const bulkSection = document.querySelector("#bulkSection");
 const jsonImportSection = document.querySelector("#jsonImportSection");
 const singleProductSection = document.querySelector("#singleProductSection");
@@ -121,9 +128,9 @@ let singlePreviewObjectUrl = "";
 let adminUnlocked = false;
 let editingProductId = null;
 let imageLoadToken = 0;
-let activeAdminTab = ["products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
+let activeAdminTab = ["store", "products", "surveys", "orders"].includes(localStorage.getItem(ADMIN_TAB_KEY))
   ? localStorage.getItem(ADMIN_TAB_KEY)
-  : "products";
+  : "store";
 let activeProductTab = ["bulk", "json", "single", "list"].includes(localStorage.getItem(PRODUCT_TAB_KEY))
   ? localStorage.getItem(PRODUCT_TAB_KEY)
   : "bulk";
@@ -176,6 +183,12 @@ function showAuthMessage(text, type) {
   adminAuthStatus.className = `message message--${type}`;
 }
 
+function showStoreSettingsMessage(text, type) {
+  storeSettingsMessage.hidden = false;
+  storeSettingsMessage.textContent = text;
+  storeSettingsMessage.className = `message message--${type}`;
+}
+
 function renderAdminTabs() {
   adminNav.querySelectorAll("[data-admin-tab]").forEach((button) => {
     button.classList.toggle("chip--active", button.dataset.adminTab === activeAdminTab);
@@ -214,6 +227,24 @@ function updateAdminPanelsVisibility() {
   productPanels.forEach((panel) => {
     panel.hidden = panel.dataset.productPanel !== activeProductTab;
   });
+}
+
+async function renderStoreSettings() {
+  if (!adminUnlocked) {
+    storeWhatsapp.value = "";
+    storeSnapchat.value = "";
+    storeSettingsMessage.hidden = true;
+    return;
+  }
+
+  try {
+    const settings = await getSiteSettings();
+    storeWhatsapp.value = settings.whatsapp || "";
+    storeSnapchat.value = settings.snapchat || "";
+    storeSettingsMessage.hidden = true;
+  } catch (error) {
+    showStoreSettingsMessage(error.message || "Chargement des coordonnees impossible.", "error");
+  }
 }
 
 function revokeSinglePreviewUrl() {
@@ -1245,7 +1276,7 @@ async function importProductsFromJson() {
 }
 
 async function refreshAdminData() {
-  await Promise.all([renderProducts(), renderOrders(), renderSurveysAdmin()]);
+  await Promise.all([renderStoreSettings(), renderProducts(), renderOrders(), renderSurveysAdmin()]);
 }
 
 async function unlockAdmin(userEmail = "") {
@@ -1255,6 +1286,7 @@ async function unlockAdmin(userEmail = "") {
 
 async function lockAdmin() {
   setAdminUnlocked(false);
+  storeSettingsMessage.hidden = true;
   adminProducts.innerHTML = '<div class="empty-state">Connexion requise.</div>';
   adminSurveys.innerHTML = '<div class="empty-state">Connexion requise.</div>';
   adminOrders.innerHTML = '<div class="empty-state">Connexion requise.</div>';
@@ -1334,6 +1366,28 @@ surveyForm.addEventListener("submit", async (event) => {
     await renderSurveysAdmin();
   } catch (error) {
     showSurveyMessage(error.message || "Ajout du sondage impossible.", "error");
+  }
+});
+
+storeSettingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!adminUnlocked) {
+    showStoreSettingsMessage("Connexion admin requise.", "error");
+    return;
+  }
+
+  try {
+    await saveSiteSettings({
+      whatsapp: storeWhatsapp.value.trim(),
+      snapchat: storeSnapchat.value.trim(),
+    });
+    showStoreSettingsMessage("Coordonnees de la boutique enregistrees.", "success");
+  } catch (error) {
+    showStoreSettingsMessage(
+      error.message || "Enregistrement des coordonnees impossible.",
+      "error",
+    );
   }
 });
 

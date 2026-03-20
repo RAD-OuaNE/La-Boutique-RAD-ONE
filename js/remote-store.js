@@ -5,10 +5,12 @@ import {
   getCart as getLocalCart,
   getOrders as getLocalOrders,
   getProducts as getLocalProducts,
+  getSiteSettings as getLocalSiteSettings,
   getSurveys as getLocalSurveys,
   saveCart as saveLocalCart,
   saveOrder as saveLocalOrder,
   saveProducts as saveLocalProducts,
+  saveSiteSettings as saveLocalSiteSettings,
   saveSurveys as saveLocalSurveys,
 } from "./store.js";
 import { getAppConfig, isSupabaseConfigured } from "./config.js";
@@ -91,6 +93,22 @@ function mapSurveyRow(row) {
     createdAt: row.created_at
       ? new Date(row.created_at).toLocaleString("fr-FR")
       : new Date().toLocaleString("fr-FR"),
+  };
+}
+
+function mapSiteSettingsRow(row) {
+  return {
+    id: row?.id || "primary",
+    whatsapp: row?.whatsapp || "",
+    snapchat: row?.snapchat || "",
+  };
+}
+
+function mapSiteSettingsInput(settings) {
+  return {
+    id: settings?.id || "primary",
+    whatsapp: String(settings?.whatsapp || ""),
+    snapchat: String(settings?.snapchat || ""),
   };
 }
 
@@ -422,6 +440,43 @@ export async function listSurveys({ activeOnly = false } = {}) {
 
   const surveys = (data || []).map(mapSurveyRow);
   return activeOnly ? surveys.filter((survey) => survey.active) : surveys;
+}
+
+export async function getSiteSettings() {
+  const client = getSupabase();
+  if (!client) {
+    return getLocalSiteSettings();
+  }
+
+  const config = getAppConfig();
+  const { data, error } = await client
+    .from(config.settingsTable)
+    .select("id,whatsapp,snapchat")
+    .eq("id", "primary")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || "Lecture des reglages boutique impossible.");
+  }
+
+  return mapSiteSettingsRow(data || { id: "primary" });
+}
+
+export async function saveSiteSettings(settings) {
+  const normalizedSettings = mapSiteSettingsInput(settings);
+  const client = getSupabase();
+  if (!client) {
+    saveLocalSiteSettings(normalizedSettings);
+    return normalizedSettings;
+  }
+
+  const config = getAppConfig();
+  const { error } = await client.from(config.settingsTable).upsert(normalizedSettings);
+  if (error) {
+    throw new Error(error.message || "Enregistrement des reglages boutique impossible.");
+  }
+
+  return normalizedSettings;
 }
 
 export async function saveSurvey(survey) {

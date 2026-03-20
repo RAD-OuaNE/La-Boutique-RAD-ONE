@@ -44,9 +44,17 @@ create table if not exists public.surveys (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.site_settings (
+  id text primary key,
+  whatsapp text default '',
+  snapchat text default '',
+  updated_at timestamptz not null default now()
+);
+
 alter table public.products enable row level security;
 alter table public.orders enable row level security;
 alter table public.surveys enable row level security;
+alter table public.site_settings enable row level security;
 
 grant select on public.surveys to anon, authenticated;
 revoke update on public.surveys from anon;
@@ -112,6 +120,25 @@ for all
 to authenticated
 using (true)
 with check (true);
+
+drop policy if exists "Public can read site settings" on public.site_settings;
+create policy "Public can read site settings"
+on public.site_settings
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Authenticated can manage site settings" on public.site_settings;
+create policy "Authenticated can manage site settings"
+on public.site_settings
+for all
+to authenticated
+using (true)
+with check (true);
+
+insert into public.site_settings (id, whatsapp, snapchat)
+values ('primary', '', '')
+on conflict (id) do nothing;
 
 insert into public.products (id, title, category, description, price, quantity, show_price, active, image)
 values

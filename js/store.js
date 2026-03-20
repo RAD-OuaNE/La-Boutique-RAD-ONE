@@ -4,6 +4,7 @@ const PRODUCTS_KEY = "vitrine-products";
 const ORDERS_KEY = "vitrine-orders";
 const CART_KEY = "vitrine-cart";
 const SURVEYS_KEY = "vitrine-surveys";
+const SITE_SETTINGS_KEY = "vitrine-site-settings";
 
 export function formatEuro(value) {
   return new Intl.NumberFormat("fr-FR", {
@@ -85,6 +86,43 @@ export function getSurveys() {
 
 export function saveSurveys(surveys) {
   localStorage.setItem(SURVEYS_KEY, JSON.stringify(surveys));
+}
+
+export function getSiteSettings() {
+  const raw = localStorage.getItem(SITE_SETTINGS_KEY);
+  if (!raw) {
+    return {
+      id: "primary",
+      whatsapp: "",
+      snapchat: "",
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      id: "primary",
+      whatsapp: String(parsed.whatsapp || ""),
+      snapchat: String(parsed.snapchat || ""),
+    };
+  } catch {
+    return {
+      id: "primary",
+      whatsapp: "",
+      snapchat: "",
+    };
+  }
+}
+
+export function saveSiteSettings(settings) {
+  localStorage.setItem(
+    SITE_SETTINGS_KEY,
+    JSON.stringify({
+      id: "primary",
+      whatsapp: String(settings?.whatsapp || ""),
+      snapchat: String(settings?.snapchat || ""),
+    }),
+  );
 }
 
 export function createOrder({ name, phone, note, items }) {
