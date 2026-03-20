@@ -561,7 +561,8 @@ function getTransformMetrics({
   const effectiveWidth = quarterTurn ? naturalHeight : naturalWidth;
   const effectiveHeight = quarterTurn ? naturalWidth : naturalHeight;
 
-  const baseScale = Math.max(viewportWidth / effectiveWidth, viewportHeight / effectiveHeight);
+  // Keep the full image visible by default instead of cropping to fill the frame.
+  const baseScale = Math.min(viewportWidth / effectiveWidth, viewportHeight / effectiveHeight);
   const finalScale = baseScale * zoom;
 
   const maxOffsetX = Math.max(0, (effectiveWidth * finalScale - viewportWidth) / 2);
