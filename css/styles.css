@@ -549,7 +549,16 @@ img {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
+}
+
+.product-card__badges .badge {
+  margin: 0;
+}
+
+.product-card__badges .badge--soft,
+.product-card__badges .badge--highlight {
+  min-height: 40px;
 }
 
 .sidebar,
