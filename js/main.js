@@ -180,16 +180,16 @@ function renderCatalogue() {
           return `
           <article class="product-card product-card--${state.viewMode} card">
             <div class="product-card__image-wrap">
+              ${
+                product.bestSeller
+                  ? '<span class="product-card__stamp" aria-label="Best seller">Best seller</span>'
+                  : ""
+              }
               <img class="product-card__image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
             </div>
             <div class="product-card__body">
               <div class="product-card__badges">
                 <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
-                ${
-                  product.bestSeller
-                    ? '<span class="badge badge--highlight">Best seller</span>'
-                    : ""
-                }
               </div>
               <h3>${escapeHtml(product.title)}</h3>
               <div class="product-card__description-wrap">

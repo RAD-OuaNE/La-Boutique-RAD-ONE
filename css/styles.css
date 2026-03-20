@@ -414,6 +414,7 @@ img {
   justify-content: center;
   padding: 10px;
   overflow: hidden;
+  position: relative;
 }
 
 .product-card__image {
@@ -540,11 +541,6 @@ img {
   margin-bottom: 12px;
 }
 
-.badge--highlight {
-  background: linear-gradient(135deg, #b73b2b 0%, #d96c3b 100%);
-  color: #fff;
-}
-
 .product-card__badges {
   display: flex;
   flex-wrap: wrap;
@@ -556,9 +552,36 @@ img {
   margin: 0;
 }
 
-.product-card__badges .badge--soft,
-.product-card__badges .badge--highlight {
+.product-card__badges .badge {
   min-height: 40px;
+}
+
+.product-card__stamp {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #c82e23 0 56%, transparent 57%),
+    repeating-conic-gradient(
+      from 0deg,
+      #e45d45 0deg 10deg,
+      #b9251d 10deg 20deg
+    );
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: 0 14px 24px rgba(122, 21, 12, 0.22);
 }
 
 .sidebar,
@@ -1076,6 +1099,15 @@ img {
 
   .product-card__image {
     transform: scale(0.92);
+  }
+
+  .product-card__stamp {
+    top: 10px;
+    left: 10px;
+    width: 62px;
+    height: 62px;
+    padding: 10px;
+    font-size: 0.62rem;
   }
 
   .product-card__body {
