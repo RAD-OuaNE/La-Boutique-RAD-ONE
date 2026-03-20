@@ -9,6 +9,7 @@ create table if not exists public.products (
   quantity integer not null default 0,
   show_price boolean not null default true,
   best_seller boolean not null default false,
+  new_product boolean not null default false,
   active boolean not null default true,
   image text not null,
   created_at timestamptz not null default now()
@@ -19,6 +20,9 @@ add column if not exists quantity integer not null default 0;
 
 alter table public.products
 add column if not exists best_seller boolean not null default false;
+
+alter table public.products
+add column if not exists new_product boolean not null default false;
 
 create table if not exists public.orders (
   id text primary key,

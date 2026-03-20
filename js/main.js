@@ -12,6 +12,7 @@ import {
 
 const CATEGORY_LABELS = {
   all: "Tout",
+  new: "Nouveaux produits",
   parfums: "Parfums",
   maquillage: "Maquillage",
   jouets: "Jouets",
@@ -106,12 +107,24 @@ function showFormMessage(text, type) {
 function getVisibleProducts() {
   return state.products
     .filter((product) => {
-      const matchesCategory = state.category === "all" || product.category === state.category;
+      const matchesCategory =
+        state.category === "all"
+          ? true
+          : state.category === "new"
+            ? Boolean(product.newProduct)
+            : product.category === state.category;
       const haystack = [product.title, product.description, product.category].join(" ").toLowerCase();
       const matchesSearch = !state.search || haystack.includes(state.search.toLowerCase());
       return matchesCategory && matchesSearch;
     })
-    .sort((left, right) => Number(Boolean(right.bestSeller)) - Number(Boolean(left.bestSeller)));
+    .sort((left, right) => {
+      const newDelta = Number(Boolean(right.newProduct)) - Number(Boolean(left.newProduct));
+      if (newDelta !== 0) {
+        return newDelta;
+      }
+
+      return Number(Boolean(right.bestSeller)) - Number(Boolean(left.bestSeller));
+    });
 }
 
 function getCartLines() {
@@ -133,7 +146,11 @@ function getCartLines() {
 }
 
 function renderFilters() {
-  const categoryIds = ["all", ...new Set(state.products.map((product) => product.category))];
+  const categoryIds = ["all"];
+  if (state.products.some((product) => product.newProduct)) {
+    categoryIds.push("new");
+  }
+  categoryIds.push(...new Set(state.products.map((product) => product.category)));
   categoryFilters.innerHTML = categoryIds
     .map(
       (categoryId) => `
@@ -190,6 +207,11 @@ function renderCatalogue() {
             <div class="product-card__body">
               <div class="product-card__badges">
                 <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
+                ${
+                  product.newProduct
+                    ? '<span class="badge badge--new">Nouveau</span>'
+                    : ""
+                }
               </div>
               <h3>${escapeHtml(product.title)}</h3>
               <div class="product-card__description-wrap">

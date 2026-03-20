@@ -567,6 +567,11 @@ img {
   min-height: 40px;
 }
 
+.badge--new {
+  background: rgba(36, 120, 74, 0.1);
+  color: #246f49;
+}
+
 .product-card__stamp {
   position: absolute;
   top: 12px;

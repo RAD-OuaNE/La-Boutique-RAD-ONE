@@ -183,6 +183,7 @@ function renderAdminTabs() {
 }
 
 const productBestSeller = document.querySelector("#productBestSeller");
+const productNewProduct = document.querySelector("#productNewProduct");
 
 function renderProductTabs() {
   productsSubnav.querySelectorAll("[data-product-tab]").forEach((button) => {
@@ -320,6 +321,7 @@ function resetProductForm() {
   productForm.reset();
   document.querySelector("#productShowPrice").checked = true;
   productBestSeller.checked = false;
+  productNewProduct.checked = false;
   productFormTitle.textContent = "Ajouter un produit seul";
   productSubmitButton.textContent = "Ajouter le produit";
   productCancelEdit.hidden = true;
@@ -351,6 +353,7 @@ function startEditingProduct(product) {
   document.querySelector("#productDescription").value = product.description || "";
   document.querySelector("#productShowPrice").checked = Boolean(product.showPrice);
   productBestSeller.checked = Boolean(product.bestSeller);
+  productNewProduct.checked = Boolean(product.newProduct);
   imageUrlInput.value = product.image || "";
   imageFileInput.value = "";
   pendingSingleFile = null;
@@ -503,6 +506,12 @@ function normalizeImportedProduct(product, index) {
       : typeof product.best_seller === "boolean"
         ? product.best_seller
         : false;
+  const newProductValue =
+    typeof product.newProduct === "boolean"
+      ? product.newProduct
+      : typeof product.new_product === "boolean"
+        ? product.new_product
+        : false;
 
   return {
     id: createImportedProductId(product, index),
@@ -513,6 +522,7 @@ function normalizeImportedProduct(product, index) {
     quantity: Number.isFinite(parsedQuantity) ? Math.round(parsedQuantity) : 0,
     showPrice: showPriceValue,
     bestSeller: bestSellerValue,
+    newProduct: newProductValue,
     active: product.active !== false,
     image,
   };
@@ -720,6 +730,7 @@ async function renderProducts() {
               <strong>${escapeHtml(product.title)}</strong>
               <span>${escapeHtml(getCategoryLabel(product.category))}</span>
               <span>${product.bestSeller ? "Best seller" : "Produit standard"}</span>
+              <span>${product.newProduct ? "Nouveau produit" : "Produit etabli"}</span>
               <span>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix masque"}</span>
               <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
             </div>
@@ -730,6 +741,13 @@ async function renderProducts() {
                 data-toggle="${escapeHtml(product.id)}"
               >
                 ${product.active ? "Masquer" : "Publier"}
+              </button>
+              <button
+                type="button"
+                class="button button--secondary button--compact"
+                data-toggle-new="${escapeHtml(product.id)}"
+              >
+                ${product.newProduct ? "Retirer nouveau" : "Marquer nouveau"}
               </button>
               <button
                 type="button"
@@ -771,6 +789,29 @@ async function renderProducts() {
 
         startEditingProduct(product);
         window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    adminProducts.querySelectorAll("[data-toggle-new]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const product = products.find((item) => item.id === button.dataset.toggleNew);
+        if (!product) {
+          return;
+        }
+
+        try {
+          await saveProduct({
+            ...product,
+            newProduct: !product.newProduct,
+          });
+          await renderProducts();
+          showMessage(
+            !product.newProduct ? "Produit marque comme nouveau." : "Statut nouveau retire.",
+            "success",
+          );
+        } catch (error) {
+          showMessage(error.message || "Mise a jour du produit impossible.", "error");
+        }
       });
     });
 
@@ -1475,6 +1516,7 @@ saveBulkProductsButton.addEventListener("click", async () => {
         description: draft.description.trim(),
         showPrice: draft.showPrice,
         bestSeller: false,
+        newProduct: false,
         active: true,
       });
     }
@@ -1521,6 +1563,7 @@ productForm.addEventListener("submit", async (event) => {
       description: document.querySelector("#productDescription").value.trim(),
       showPrice: document.querySelector("#productShowPrice").checked,
       bestSeller: productBestSeller.checked,
+      newProduct: productNewProduct.checked,
       active: true,
     };
 

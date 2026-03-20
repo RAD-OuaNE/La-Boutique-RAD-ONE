@@ -44,6 +44,7 @@ function mapProductRow(row) {
     quantity: Number(row.quantity ?? 0),
     showPrice: Boolean(row.show_price),
     bestSeller: Boolean(row.best_seller),
+    newProduct: Boolean(row.new_product),
     active: row.active !== false,
     image: row.image || "",
   };
@@ -59,6 +60,7 @@ function mapProductInput(product) {
     quantity: Math.max(0, Number(product.quantity ?? 0)),
     show_price: Boolean(product.showPrice),
     best_seller: Boolean(product.bestSeller),
+    new_product: Boolean(product.newProduct),
     active: product.active !== false,
     image: product.image,
   };
