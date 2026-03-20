@@ -182,6 +182,8 @@ function renderAdminTabs() {
   });
 }
 
+const productBestSeller = document.querySelector("#productBestSeller");
+
 function renderProductTabs() {
   productsSubnav.querySelectorAll("[data-product-tab]").forEach((button) => {
     button.classList.toggle("chip--active", button.dataset.productTab === activeProductTab);
@@ -317,6 +319,7 @@ async function setSingleImageFromUrl(url, { silent = false } = {}) {
 function resetProductForm() {
   productForm.reset();
   document.querySelector("#productShowPrice").checked = true;
+  productBestSeller.checked = false;
   productFormTitle.textContent = "Ajouter un produit seul";
   productSubmitButton.textContent = "Ajouter le produit";
   productCancelEdit.hidden = true;
@@ -347,6 +350,7 @@ function startEditingProduct(product) {
   document.querySelector("#productQuantity").value = product.quantity ?? 0;
   document.querySelector("#productDescription").value = product.description || "";
   document.querySelector("#productShowPrice").checked = Boolean(product.showPrice);
+  productBestSeller.checked = Boolean(product.bestSeller);
   imageUrlInput.value = product.image || "";
   imageFileInput.value = "";
   pendingSingleFile = null;
@@ -493,6 +497,12 @@ function normalizeImportedProduct(product, index) {
       : typeof product.show_price === "boolean"
         ? product.show_price
         : true;
+  const bestSellerValue =
+    typeof product.bestSeller === "boolean"
+      ? product.bestSeller
+      : typeof product.best_seller === "boolean"
+        ? product.best_seller
+        : false;
 
   return {
     id: createImportedProductId(product, index),
@@ -502,6 +512,7 @@ function normalizeImportedProduct(product, index) {
     price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
     quantity: Number.isFinite(parsedQuantity) ? Math.round(parsedQuantity) : 0,
     showPrice: showPriceValue,
+    bestSeller: bestSellerValue,
     active: product.active !== false,
     image,
   };
@@ -708,6 +719,7 @@ async function renderProducts() {
             <div class="admin-item__body">
               <strong>${escapeHtml(product.title)}</strong>
               <span>${escapeHtml(getCategoryLabel(product.category))}</span>
+              <span>${product.bestSeller ? "Best seller" : "Produit standard"}</span>
               <span>${product.showPrice ? escapeHtml(formatCurrency(product.price)) : "Prix masque"}</span>
               <span>${product.quantity > 0 ? `Stock: ${product.quantity}` : "Produit epuise"}</span>
             </div>
@@ -1462,6 +1474,7 @@ saveBulkProductsButton.addEventListener("click", async () => {
         image: processedImage,
         description: draft.description.trim(),
         showPrice: draft.showPrice,
+        bestSeller: false,
         active: true,
       });
     }
@@ -1507,6 +1520,7 @@ productForm.addEventListener("submit", async (event) => {
       image,
       description: document.querySelector("#productDescription").value.trim(),
       showPrice: document.querySelector("#productShowPrice").checked,
+      bestSeller: productBestSeller.checked,
       active: true,
     };
 

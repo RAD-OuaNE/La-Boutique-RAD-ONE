@@ -540,6 +540,18 @@ img {
   margin-bottom: 12px;
 }
 
+.badge--highlight {
+  background: linear-gradient(135deg, #b73b2b 0%, #d96c3b 100%);
+  color: #fff;
+}
+
+.product-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .sidebar,
 .basket,
 .form-card,

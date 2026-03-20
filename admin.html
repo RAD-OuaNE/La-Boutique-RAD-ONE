@@ -149,7 +149,7 @@
               id="jsonImportText"
               class="input textarea"
               rows="10"
-              placeholder='[{"id":"prod-exemple","title":"Nom du produit","category":"soins_lissage","description":"Description","price":0,"quantity":1,"showPrice":false,"active":true,"image":"https://..."}]'
+              placeholder='[{"id":"prod-exemple","title":"Nom du produit","category":"soins_lissage","description":"Description","price":0,"quantity":1,"showPrice":false,"bestSeller":true,"active":true,"image":"https://..."}]'
             ></textarea>
           </label>
           <div class="bulk-actions">
@@ -267,6 +267,10 @@
           <label class="checkbox-row">
             <input id="productShowPrice" type="checkbox" checked />
             <span>Afficher le prix</span>
+          </label>
+          <label class="checkbox-row">
+            <input id="productBestSeller" type="checkbox" />
+            <span>Best seller</span>
           </label>
           <div class="bulk-actions">
             <button id="productSubmitButton" class="button" type="submit">Ajouter le produit</button>

@@ -104,12 +104,14 @@ function showFormMessage(text, type) {
 }
 
 function getVisibleProducts() {
-  return state.products.filter((product) => {
-    const matchesCategory = state.category === "all" || product.category === state.category;
-    const haystack = [product.title, product.description, product.category].join(" ").toLowerCase();
-    const matchesSearch = !state.search || haystack.includes(state.search.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  return state.products
+    .filter((product) => {
+      const matchesCategory = state.category === "all" || product.category === state.category;
+      const haystack = [product.title, product.description, product.category].join(" ").toLowerCase();
+      const matchesSearch = !state.search || haystack.includes(state.search.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((left, right) => Number(Boolean(right.bestSeller)) - Number(Boolean(left.bestSeller)));
 }
 
 function getCartLines() {
@@ -181,7 +183,14 @@ function renderCatalogue() {
               <img class="product-card__image" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.title)}" />
             </div>
             <div class="product-card__body">
-              <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
+              <div class="product-card__badges">
+                <span class="badge badge--soft">${escapeHtml(getCategoryLabel(product.category))}</span>
+                ${
+                  product.bestSeller
+                    ? '<span class="badge badge--highlight">Best seller</span>'
+                    : ""
+                }
+              </div>
               <h3>${escapeHtml(product.title)}</h3>
               <div class="product-card__description-wrap">
                 <p class="product-card__description ${isExpanded ? "product-card__description--expanded" : ""}">

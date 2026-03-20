@@ -43,6 +43,7 @@ function mapProductRow(row) {
     price: Number(row.price || 0),
     quantity: Number(row.quantity ?? 0),
     showPrice: Boolean(row.show_price),
+    bestSeller: Boolean(row.best_seller),
     active: row.active !== false,
     image: row.image || "",
   };
@@ -57,6 +58,7 @@ function mapProductInput(product) {
     price: Number(product.price || 0),
     quantity: Math.max(0, Number(product.quantity ?? 0)),
     show_price: Boolean(product.showPrice),
+    best_seller: Boolean(product.bestSeller),
     active: product.active !== false,
     image: product.image,
   };
@@ -176,7 +178,7 @@ export async function listProducts({ includeInactive = false } = {}) {
   const config = getAppConfig();
   let query = client
     .from(config.productsTable)
-    .select("id,title,category,description,price,quantity,show_price,active,image,created_at")
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (!includeInactive) {
